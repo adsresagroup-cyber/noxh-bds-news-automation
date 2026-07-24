@@ -286,8 +286,7 @@ async function run() {
 Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xác:
 {
   "angle": "Tin tức / Chuyên gia chia sẻ",
-  "visuals": "Mô tả chi tiết từng cảnh quay minh họa phù hợp, khớp chính xác với từng đoạn lời thoại (ví dụ: Mở đầu bằng hình ảnh gia đình hạnh phúc, tiếp theo chuyển cảnh sang chung cư cao tầng, đồ họa quy trình, văn bản pháp luật...)",
-  "script": "CÂU TIÊU ĐỀ VIẾT HOA TOÀN BỘ VỚI DẤU CHẤM CẢM!\\n\\n[Phần lời thoại đọc voice-off liền mạch hoàn toàn, NÓI THẲNG VÀO NỘI DUNG. TUYỆT ĐỐI KHÔNG GHI CÁC CHỮ TIỀN TỐ NHƯ 'TIÊU ĐỀ:', '[HOOK]', '[BODY]', '[CTA]' Ở PHÍA TRƯỚC]",
+  "script": "CÂU TIÊU ĐỀ VIẾT HOA TOÀN BỘ VỚI DẤU CHẤM CẢM!\\n\\n[Phần lời thoại đọc voice-off liền mạch hoàn toàn, NÓI THẲNG VÀO NỘI DUNG, PHẢI DÀI TỪ 230 ĐẾN 290 TỪ TIẾNG VIỆT. TUYỆT ĐỐI KHÔNG GHI CÁC CHỮ TIỀN TỐ NHƯ 'TIÊU ĐỀ:', '[HOOK]', '[BODY]', '[CTA]' Ở PHÍA TRƯỚC]",
   "fb_content": "Nội dung bài đăng Facebook ngắn từ 3-5 dòng, dòng 1 có emoji 🔥 hoặc ⁉️ giật tít in hoa, các dòng sau tóm tắt thông tin đắt giá nhất và câu hỏi khảo sát thảo luận."
 }
 
@@ -302,7 +301,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
 1. Dòng 1: CÂU TIÊU ĐỀ IN HOA TOÀN BỘ KÈM DẤU CHẤM CẢM (!).
 2. Xuống dòng 2 lần, viết phần LỜI THOẠI ĐỌC VOICE-OFF LIỀN MẠCH từ đầu đến cuối.
 3. TUYỆT ĐỐI KHÔNG GHI CÁC TỪ 'TIÊU ĐỀ:', '[HOOK]', '[BODY]', '[CTA]' TRONG NỘI DUNG KỊCH BẢN.
-4. Độ dài phần "script" (Tiêu đề + Lời thoại) phải NẰM TRONG KHOẢNG 230 ĐẾN 290 TỪ. 
+4. ĐỘ DÀI BẮT BUỘC: Tổng số từ phần "script" (Tiêu đề + Lời thoại) PHẢI NẰM TRONG KHOẢNG 230 ĐẾN 290 TỪ TIẾNG VIỆT. TUYỆT ĐỐI KHÔNG VIẾT NGẮN DƯỚI 230 TỪ. AI cần mở rộng phân tích chuyên sâu các yếu tố tác động vĩ mô, pháp lý, bài học kinh nghiệm và góc nhìn đa chiều để đảm bảo đủ từ 230-290 từ.
 5. Văn phong tự nhiên, xưng hô gần gũi (mình, em, các bác, mọi người...). TUYỆT ĐỐI KHÔNG xưng tên cá nhân cụ thể. Không kêu gọi inbox riêng.
 `;
 
@@ -320,10 +319,10 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                     model: "openai/gpt-4o-mini",
                     messages: [
                         { role: "system", content: systemInstruction },
-                        { role: "user", content: `Tiêu đề: ${art.title}\nTóm tắt sơ bộ: ${art.description}` }
+                        { role: "user", content: `Tiêu đề: ${art.title}\nTóm tắt sơ bộ: ${art.description}\n\nYÊU CẦU BẮT BUỘC: Viết kịch bản voice-off phân tích sâu sắc, đa chiều, đạt ĐỘ DÀI TỪ 230 ĐẾN 290 TỪ TIẾNG VIỆT. Tuyệt đối không viết ngắn dưới 230 từ!` }
                     ],
                     response_format: { type: "json_object" },
-                    temperature: 0.2
+                    temperature: 0.3
                 })
             });
 
@@ -345,7 +344,6 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                 title: art.title,
                 url: art.url,
                 angle: analysis.angle || "Tin tức BĐS Nghệ An",
-                visuals: analysis.visuals || "Hình ảnh bản đồ quy hoạch và hạ tầng Nghệ An - Hà Tĩnh",
                 script: analysis.script || "",
                 fb_content: fbText
             });
@@ -355,7 +353,6 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                 title: art.title,
                 url: art.url,
                 angle: "Tin tức BĐS Nghệ An",
-                visuals: "Hình ảnh hạ tầng giao thông và dự án bất động sản tại Nghệ An",
                 script: `${art.title.toUpperCase()}!\n\nBiến động mới nhất tại thị trường bất động sản Nghệ An bạn đã biết chưa? ${art.description}\n\nBạn đánh giá sao về thông tin này? Bình luận chia sẻ bên dưới nhé!`,
                 fb_content: `🔥 MỚI NHẤT VỀ BẤT ĐỘNG SẢN NGHỆ AN\n\n${art.title}\n\n👇 Xem chi tiết thông tin và thảo luận ngay bên dưới!` + "\n\n------------------------------\n🏠 TongkhoBDS.com - Kho Bất động sản lớn nhất Việt Nam\n🏢 Địa chỉ: 51 Kim Mã, Phường Giảng Võ, Hà Nội\n☎️ Hotline: 1900.988.998\n#batdongsan #tongkhobatdongsan #tintuc #24h"
             });
@@ -366,7 +363,6 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
     for (let i = 0; i < results.length; i++) {
         results[i].stt = i + 1;
         if (i >= 6) {
-            results[i].visuals = "";
             results[i].script = "";
             results[i].fb_content = "";
         }
@@ -470,7 +466,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
     const defaultSheetTitle = sheetMetadata.sheets[0].properties.title;
 
     // 6.6 Prepare values to write
-    const headersRow = ['STT', 'Tiêu đề bài báo', 'Đường dẫn [URL]', 'Phong cách / Góc nhìn', 'Mô tả hình ảnh (Visuals)', 'Kịch bản Voice-off (Lời thoại)', 'Nội dung đăng Facebook (Content FB)'];
+    const headersRow = ['STT', 'Tiêu đề bài báo', 'Đường dẫn [URL]', 'Phong cách / Góc nhìn', 'Kịch bản Voice-off (Lời thoại)', 'Nội dung đăng Facebook (Content FB)'];
     const values = [headersRow];
     results.forEach(item => {
         values.push([
@@ -478,7 +474,6 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
             item.title,
             item.url,
             item.angle,
-            item.visuals,
             item.script,
             item.fb_content
         ]);
@@ -486,7 +481,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
 
     // 6.7 Write values
     console.log("Đang ghi dữ liệu vào Google Sheet...");
-    const rangeStr = `'${defaultSheetTitle}'!A1:G${values.length}`;
+    const rangeStr = `'${defaultSheetTitle}'!A1:F${values.length}`;
     const updateUri = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rangeStr)}?valueInputOption=USER_ENTERED`;
     
     const updateResponse = await fetch(updateUri, {
@@ -529,7 +524,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                         startRowIndex: 0,
                         endRowIndex: 1,
                         startColumnIndex: 0,
-                        endColumnIndex: 7
+                        endColumnIndex: 6
                     },
                     cell: {
                         userEnteredFormat: {
@@ -555,7 +550,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                         startRowIndex: 1,
                         endRowIndex: values.length,
                         startColumnIndex: 0,
-                        endColumnIndex: 7
+                        endColumnIndex: 6
                     },
                     cell: {
                         userEnteredFormat: {
