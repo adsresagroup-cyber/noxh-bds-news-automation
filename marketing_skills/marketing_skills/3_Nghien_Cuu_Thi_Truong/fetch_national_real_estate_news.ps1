@@ -1148,15 +1148,12 @@ Nguồn tin: $source
 Mô tả tóm tắt: $desc
 Phong cách: $style
 
-[YÊU CẦU ĐẶC BIỆT VỀ ĐỘ DÀI & CẤU TRÚC]
-- Phần kịch bản nói "Voiceover" BẮT BUỘC PHẢI DÀI từ 230 đến 290 từ tiếng Việt (đếm bằng cách tách khoảng trắng).
-- Để kiểm soát độ dài trong khoảng 230-290 từ, hãy cấu trúc phần Voiceover gồm đúng các phần:
-  1. TIÊU ĐỀ: 1 câu (khoảng 10-15 từ).
-  2. HOOK: Đúng 1 câu ngắn, gây tò mò mạnh hoặc chứa câu hỏi/nhận định trái ngược (khoảng 10-15 từ, tối ưu giữ chân 3-6 giây đầu).
-  3. NỘI DUNG CHÍNH (BODY): 2-3 đoạn văn ngắn phân tích chi tiết thông tin, rủi ro hoặc chia sẻ kinh nghiệm giao dịch BĐS (khoảng 180-220 từ).
-  4. CTA: 1-2 câu ngắn kêu gọi thảo luận mở (khoảng 30-40 từ).
-- Hãy đếm từ thật kỹ trước khi xuất kết quả để đảm bảo nằm đúng trong khung giới hạn từ 230 đến 290 từ.
-- Nội dung bài đăng Facebook "FacebookContent" phải từ 3 đến 5 dòng.
+[YÊU CẦU BẮT BUỘC VỀ ĐỘ DÀI & ĐỊNH DẠNG]
+1. Dòng 1: CÂU TIÊU ĐỀ IN HOA TOÀN BỘ KÈM DẤU CHẤM CẢM (!).
+2. Xuống dòng 2 lần, viết phần LỜI THOẠI ĐỌC VOICE-OFF LIỀN MẠCH từ đầu đến cuối.
+3. TUYỆT ĐỐI KHÔNG GHI CÁC TỪ 'TIÊU ĐỀ:', '[HOOK]', '[BODY]', '[CTA]' TRONG NỘI DUNG KỊCH BẢN.
+4. ĐỘ DÀI BẮT BUỘC: Tổng số từ phần Voiceover (Tiêu đề + Lời thoại) PHẢI NẰM TRONG KHOẢNG 230 ĐẾN 290 TỪ TIẾNG VIỆT. TUYỆT ĐỐI KHÔNG VIẾT NGẮN DƯỚI 230 TỪ. AI cần mở rộng phân tích chuyên sâu các yếu tố tác động vĩ mô, pháp lý, bài học kinh nghiệm và góc nhìn đa chiều để đảm bảo đủ từ 230-290 từ.
+5. Nội dung bài đăng Facebook "FacebookContent" phải từ 3 đến 5 dòng.
 $additionalHint
 "@
      
