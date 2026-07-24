@@ -152,9 +152,9 @@ async function run() {
         }
     }
 
-    // 1. Load API Key
-    let geminiApiKey = "";
-    if (fs.existsSync(envPath)) {
+    // 1. Load API Key (Check process.env first for GitHub Actions)
+    let geminiApiKey = process.env.GEMINI_API_KEY || "";
+    if (!geminiApiKey && fs.existsSync(envPath)) {
         const envText = fs.readFileSync(envPath, 'utf8');
         const lines = envText.split(/\r?\n/);
         for (const line of lines) {
@@ -169,21 +169,18 @@ async function run() {
     }
 
     if (!geminiApiKey) {
-        throw new Error("GEMINI_API_KEY not found in .env file");
+        throw new Error("GEMINI_API_KEY not found in environment or .env file");
     }
 
-    // 2. Set up Time Range (7:00 AM to 7:00 AM)
+    // 2. Set up Time Range (24h/48h window up to current execution time)
     const now = new Date();
-    const today7AM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 0, 0, 0);
-    
-    let startTime, endTime;
-    endTime = today7AM;
+    let endTime = now;
+    let startTime;
 
     if (now.getDay() === 1) { // Monday
-        // Monday run covers Saturday 7:00 AM to Monday 7:00 AM (includes Sunday)
-        startTime = new Date(today7AM.getTime() - 2 * 24 * 60 * 60 * 1000);
+        startTime = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
     } else {
-        startTime = new Date(today7AM.getTime() - 1 * 24 * 60 * 60 * 1000);
+        startTime = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
     }
 
     console.log(`Lọc bài viết từ: ${getFormattedDate(startTime)} đến: ${getFormattedDate(endTime)}`);
@@ -216,19 +213,15 @@ async function run() {
                 
                 if (isNaN(pubDate.getTime())) continue;
                 
-                if (pubDate <= endTime) {
-                    if (matchesHcm(cleanTitle, cleanDesc) && isRealEstateOrInfrastructure(cleanTitle, cleanDesc)) {
-                        const trimmedLink = link.trim();
-                        if (!scrapedHistory.includes(trimmedLink)) {
-                            if (!articles.some(a => a.url === trimmedLink)) {
-                                articles.push({
-                                    title: cleanTitle,
-                                    url: trimmedLink,
-                                    description: cleanDesc,
-                                    pubDate
-                                });
-                            }
-                        }
+                if (matchesHcm(cleanTitle, cleanDesc) && isRealEstateOrInfrastructure(cleanTitle, cleanDesc)) {
+                    const trimmedLink = link.trim();
+                    if (!articles.some(a => a.url === trimmedLink)) {
+                        articles.push({
+                            title: cleanTitle,
+                            url: trimmedLink,
+                            description: cleanDesc,
+                            pubDate
+                        });
                     }
                 }
             }
@@ -237,26 +230,23 @@ async function run() {
         }
     }
 
-    console.log(`Tìm thấy tổng cộng ${articles.length} bài viết về TP.HCM (không giới hạn thời gian bắt đầu).`);
+    console.log(`Tìm thấy tổng cộng ${articles.length} bài viết về TP.HCM.`);
     
-    // Lấy các bài trong khung thời gian chính (24h/48h)
-    let filtered = articles.filter(a => a.pubDate >= startTime);
-    console.log(`Tìm thấy ${filtered.length} bài viết trong khung thời gian chính.`);
+    // Prioritize articles within recent 24-48h window not yet in history
+    let filtered = articles.filter(a => a.pubDate >= startTime && !scrapedHistory.includes(a.url));
+    console.log(`Tìm thấy ${filtered.length} bài viết mới trong khung thời gian chính.`);
     
-    // Nếu ít hơn 10 bài, lấy thêm các bài viết cũ hơn để bù vào cho đủ 10
+    // Fallback: fill up to 10 from available articles even if previously seen or slightly older
     if (filtered.length < 10) {
-        console.log("Số lượng bài viết trong ngày ít hơn 10. Đang lấy thêm bài viết cũ hơn từ RSS...");
-        const older = articles
-            .filter(a => a.pubDate < startTime)
-            .sort((a, b) => b.pubDate - a.pubDate);
-            
-        for (const art of older) {
+        const remaining = articles.filter(a => !filtered.some(f => f.url === a.url));
+        remaining.sort((a, b) => b.pubDate - a.pubDate);
+        for (const art of remaining) {
             if (filtered.length >= 10) break;
             filtered.push(art);
         }
     }
 
-    // Sắp xếp bài viết theo thời gian mới nhất
+    // Sort selected articles by pubDate descending
     filtered.sort((a, b) => b.pubDate - a.pubDate);
     const topArticles = filtered.slice(0, 10);
     console.log(`Quyết định lựa chọn ${topArticles.length} bài viết để gửi AI phân tích.`);
@@ -266,37 +256,25 @@ async function run() {
         return;
     }
 
-    // 4. Call Gemini to Analyze and Write Scripts
+    // 4. Call Gemini to Analyze and Write Detailed Scripts
     const results = [];
-    const systemInstruction = `Bạn là một biên tập viên tin tức bất động sản chuyên nghiệp tại Việt Nam.
-Hãy phân tích bài viết bất động sản TP.HCM sau đây và trả về một đối tượng JSON có cấu trúc như sau:
+    const systemInstruction = `Bạn là một biên tập viên tin tức và biên kịch video bất động sản chuyên nghiệp tại Việt Nam, am hiểu chuyên sâu về thị trường TP.HCM.
+Hãy phân tích bài viết và trả về một đối tượng JSON chuẩn:
 {
-  "summary": "Tóm tắt nội dung bài viết ngắn gọn, dễ hiểu (dưới 60 từ)",
-  "angle": "Góc nhìn phân tích chuyên sâu về tác động đến thị trường, nhà đầu tư (dưới 50 từ)",
-  "prominence_score": 8,
-  "script": "Tiêu đề: [Tiêu đề video kích thích]\\n\\n[HOOK]\\n[Lời thoại hook gây tò mò, giật gân]\\n\\n[BODY]\\n[Lời thoại phân tích chi tiết, mạch lạc]\\n\\n[CTA]\\n[Lời thoại kêu gọi hành động thảo luận và đăng ký kênh]",
-  "fb_content": "Nội dung bài đăng Facebook ngắn, dài từ 3-5 dòng (sử dụng ký tự '\\n' để xuống dòng), tuyệt đối không bao gồm thông tin liên hệ hay chân trang quảng cáo ở đây."
+  "angle": "Tin tức / Chuyên gia chia sẻ",
+  "visuals": "Mô tả chi tiết cảnh quay video minh họa phù hợp từng câu thoại (các tuyến đường, dự án cao tầng, bản đồ quy hoạch TP.HCM).",
+  "script": "TIÊU ĐỀ: [Tiêu đề thu hút]\\n\\n[HOOK]\\n[Lời thoại hook giật gân, gây tò mò dưới 15 từ, nói 3-6s đầu]\\n\\n[BODY]\\n[Lời thoại phân tích sâu, mạch lạc]\\n\\n[CTA]\\n[Lời thoại kêu gọi thảo luận mở và đăng ký kênh]",
+  "fb_content": "Nội dung bài đăng Facebook ngắn từ 3-5 dòng, dòng 1 có emoji 🔥 hoặc ⁉️ giật tít in hoa, các dòng sau tóm tắt và kêu gọi thảo luận."
 }
 
-Yêu cầu về mặt phong cách và đa dạng hóa nội dung phân tích (không chỉ tóm tắt dự án một cách khô khan):
-- Nếu bài báo về xử lý vi phạm/sai phạm: Nhấn mạnh rủi ro pháp lý, bài học xương máu cho người mua/nhà đầu tư.
-- Nếu bài báo về hướng dẫn/thủ tục: Chia sẻ mẹo làm hồ sơ, quy trình làm giấy tờ và các lưu ý/sai lầm thường gặp khi giao dịch BĐS.
-- Nếu bài báo về cập nhật dự án/tiến độ: Phân tích cơ hội đầu tư, thời điểm vàng xuống tiền.
-
 Yêu cầu cực kỳ quan trọng cho phần "script":
-1. Độ dài phần "script" (chỉ tính phần lời thoại Tiêu đề, Hook, Body, CTA) phải NẰM TRONG KHOẢNG 230 ĐẾN 290 TỪ. Nếu ngoài khoảng này là vi phạm quy chuẩn nghiêm trọng.
-2. Cấu trúc kịch bản phải tuân thủ:
+1. Độ dài lời thoại phần "script" (chỉ tính phần Tiêu đề, Hook, Body, CTA) phải NẰM TRONG KHOẢNG 230 ĐẾN 290 TỪ. 
+2. Cấu trúc kịch bản:
    - TIÊU ĐỀ: 1 câu kích thích (10-15 từ).
-   - [HOOK]: Đúng 1 câu cực ngắn gọn, gây tò mò mạnh hoặc chứa câu hỏi/nhận định trái ngược (dưới 15 từ, thời lượng nói 3-6 giây đầu). Tuyệt đối không giải thích dài dòng ở đây.
-   - [BODY]: 2-3 đoạn ngắn phân tích chi tiết hoặc chia sẻ kinh nghiệm (180-220 từ).
-   - [CTA]: 1-2 câu ngắn kêu gọi thảo luận mở (30-40 từ).
-3. Phong cách kể kịch tính, thu hút, nhịp điệu nhanh của tin tức ngắn TikTok/Reels.
-4. Chỉ sử dụng ngôn ngữ tiếng Việt tự nhiên, không chứa mô tả hình ảnh trong phần "script" này.
-
-Yêu cầu định dạng phần "fb_content" (độ dài 3-5 dòng):
-- Dòng 1: Một câu giật tít bắt đầu bằng biểu tượng cảm xúc phù hợp (🔥 hoặc ⁉️), viết in hoa toàn bộ hoặc những cụm từ quan trọng liên quan đến địa phương/thị trường TP.HCM.
-- Dòng 2: Tóm tắt thông tin quan trọng nhất ngắn gọn.
-- Dòng 3-5: Lời kêu gọi hành động xem video (ví dụ: 👇 Xem ngay video bên dưới) kèm câu hỏi thảo luận mở kích thích tương tác bình luận.
+   - [HOOK]: Đúng 1 câu cực ngắn gọn (dưới 15 từ, thời lượng nói 3-6s đầu). Tuyệt đối không dài dòng.
+   - [BODY]: 2-3 đoạn phân tích logic, kịch tính, nhịp điệu nhanh (180-220 từ).
+   - [CTA]: 1-2 câu kêu gọi bình luận thảo luận mở (30-40 từ).
+3. Văn phong tự nhiên, xưng hô gần gũi (mình, em, các bác, mọi người...). Không xưng tên cá nhân cụ thể.
 `;
 
     for (let i = 0; i < topArticles.length; i++) {
@@ -321,7 +299,8 @@ Yêu cầu định dạng phần "fb_content" (độ dài 3-5 dòng):
             });
 
             if (!apiResponse.ok) {
-                throw new Error(`API Error: ${apiResponse.statusText}`);
+                const errText = await apiResponse.text();
+                throw new Error(`API Error ${apiResponse.status}: ${errText}`);
             }
 
             const resData = await apiResponse.json();
@@ -331,39 +310,36 @@ Yêu cầu định dạng phần "fb_content" (độ dài 3-5 dòng):
             
             let fbText = "";
             if (analysis.fb_content) {
-                fbText = analysis.fb_content.trim() + "\n\n------------------------------\n🏠 TongkhoBDS.com - Kho Bất động sản lớn nhất Việt Nam\n☎️ Hotline: 1900.988.998\n#batdongsan #tongkhobatdongsan #tintuc #24h";
+                fbText = analysis.fb_content.trim() + "\n\n------------------------------\n🏠 TongkhoBDS.com - Kho Bất động sản lớn nhất Việt Nam\n🏢 Địa chỉ: 51 Kim Mã, Phường Giảng Võ, Hà Nội\n☎️ Hotline: 1900.988.998\n#batdongsan #tongkhobatdongsan #tintuc #24h";
             }
             results.push({
                 title: art.title,
                 url: art.url,
-                summary: analysis.summary,
-                angle: analysis.angle,
-                prominence_score: Number(analysis.prominence_score) || 5,
-                script: analysis.script,
+                angle: analysis.angle || "Tin tức BĐS TP.HCM",
+                visuals: analysis.visuals || "Hình ảnh bản đồ quy hoạch và hạ tầng giao thông TP.HCM",
+                script: analysis.script || "",
                 fb_content: fbText
             });
         } catch (e) {
             console.error(`Lỗi khi gọi API phân tích bài ${i+1}:`, e.message);
-            // Fallback object
             results.push({
                 title: art.title,
                 url: art.url,
-                summary: art.description.slice(0, 150) + "...",
-                angle: "Đang cập nhật phân tích...",
-                prominence_score: 5,
-                script: "",
-                fb_content: ""
+                angle: "Tin tức BĐS TP.HCM",
+                visuals: "Hình ảnh hạ tầng và các dự án bất động sản tại TP.HCM",
+                script: `TIÊU ĐỀ: ${art.title}\n\n[HOOK]\nBiến động mới nhất tại thị trường bất động sản TP.HCM bạn đã biết chưa?\n\n[BODY]\n${art.description}\n\n[CTA]\nBạn đánh giá sao về thông tin này? Bình luận chia sẻ bên dưới nhé!`,
+                fb_content: `🔥 MỚI NHẤT VỀ BẤT ĐỘNG SẢN TP.HCM\n\n${art.title}\n\n👇 Xem chi tiết thông tin và thảo luận ngay bên dưới!` + "\n\n------------------------------\n🏠 TongkhoBDS.com - Kho Bất động sản lớn nhất Việt Nam\n🏢 Địa chỉ: 51 Kim Mã, Phường Giảng Võ, Hà Nội\n☎️ Hotline: 1900.988.998\n#batdongsan #tongkhobatdongsan #tintuc #24h"
             });
         }
     }
 
-    // 5. Select top 6 by prominence_score and clear the rest
-    results.sort((a, b) => b.prominence_score - a.prominence_score);
+    // 5. Select top 6 scripts and clear script for remaining items
     for (let i = 0; i < results.length; i++) {
         results[i].stt = i + 1;
         if (i >= 6) {
-            results[i].script = ""; // Only keep top 6 scripts
-            results[i].fb_content = ""; // Only keep top 6 FB content
+            results[i].visuals = "";
+            results[i].script = "";
+            results[i].fb_content = "";
         }
     }
 
@@ -466,15 +442,15 @@ Yêu cầu định dạng phần "fb_content" (độ dài 3-5 dòng):
     const defaultSheetTitle = sheetMetadata.sheets[0].properties.title;
 
     // 7.6 Prepare values to write
-    const headersRow = ['STT', 'Tiêu đề bài báo', 'Đường dẫn [URL]', 'Tóm tắt nội dung', 'Góc nhìn phân tích', 'Kịch bản video', 'Nội dung đăng Facebook (Content FB)'];
+    const headersRow = ['STT', 'Tiêu đề bài báo', 'Đường dẫn [URL]', 'Phong cách / Góc nhìn', 'Mô tả hình ảnh (Visuals)', 'Kịch bản Voice-off (Lời thoại)', 'Nội dung đăng Facebook (Content FB)'];
     const values = [headersRow];
     results.forEach(item => {
         values.push([
             item.stt,
             item.title,
             item.url,
-            item.summary,
             item.angle,
+            item.visuals,
             item.script,
             item.fb_content
         ]);
