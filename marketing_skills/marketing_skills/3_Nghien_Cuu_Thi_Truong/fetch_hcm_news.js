@@ -333,7 +333,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                 url: art.url,
                 angle: "Tin tức BĐS TP.HCM",
                 visuals: "Hình ảnh hạ tầng và các dự án bất động sản tại TP.HCM",
-                script: `TIÊU ĐỀ: ${art.title}\n\n[HOOK]\nBiến động mới nhất tại thị trường bất động sản TP.HCM bạn đã biết chưa?\n\n[BODY]\n${art.description}\n\n[CTA]\nBạn đánh giá sao về thông tin này? Bình luận chia sẻ bên dưới nhé!`,
+                script: `${art.title.toUpperCase()}!\n\nBiến động mới nhất tại thị trường bất động sản TP.HCM bạn đã biết chưa? ${art.description}\n\nBạn đánh giá sao về thông tin này? Bình luận chia sẻ bên dưới nhé!`,
                 fb_content: `🔥 MỚI NHẤT VỀ BẤT ĐỘNG SẢN TP.HCM\n\n${art.title}\n\n👇 Xem chi tiết thông tin và thảo luận ngay bên dưới!` + "\n\n------------------------------\n🏠 TongkhoBDS.com - Kho Bất động sản lớn nhất Việt Nam\n🏢 Địa chỉ: 51 Kim Mã, Phường Giảng Võ, Hà Nội\n☎️ Hotline: 1900.988.998\n#batdongsan #tongkhobatdongsan #tintuc #24h"
             });
         }

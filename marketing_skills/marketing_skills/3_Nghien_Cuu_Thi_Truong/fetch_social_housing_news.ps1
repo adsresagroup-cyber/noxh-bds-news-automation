@@ -977,11 +977,9 @@ function Get-NewsScript ($title, $desc, $source, $duration) {
     ) -join "`r`n"
     
     $voiceoff = @(
-        "TIEU DE: $title - CƠ HỘI NÀO CHO NGƯỜI MUA NHÀ?",
-        "HOOK: Bạn đã nghe tin mới nhất này chưa? Nếu đang quan tâm đến nhà ở xã hội, hãy cùng tìm hiểu ngay nhé!",
-        "NOI DUNG CHINH: Theo thông tin vừa cập nhật trên ${source}: $desc.",
-        "Đây là diễn biến quan trọng, ảnh hưởng trực tiếp đến quy trình xét duyệt cũng như cơ hội sở hữu nhà của mọi người.",
-        "CTA: Bác nào đang quan tâm dự án này thì để lại bình luận thảo luận bên dưới và follow kênh nhé!"
+        "$($title.ToUpper()) - CƠ HỘI NÀO CHO NGƯỜI MUA NHÀ!",
+        "",
+        "Bạn đã nghe tin mới nhất này chưa? Nếu đang quan tâm đến nhà ở xã hội, hãy cùng tìm hiểu ngay nhé! Theo thông tin vừa cập nhật trên ${source}: $desc. Đây là diễn biến quan trọng, ảnh hưởng trực tiếp đến quy trình xét duyệt cũng như cơ hội sở hữu nhà của mọi người. Bác nào đang quan tâm dự án này thì để lại bình luận thảo luận bên dưới và follow kênh nhé!"
     ) -join "`r`n"
 
     $fbContent = @"
@@ -1008,11 +1006,9 @@ function Get-ExpertScript ($title, $desc, $source, $duration) {
     ) -join "`r`n"
     
     $voiceoff = @(
-        "TIEU DE: GÓC NHÌN THỰC TẾ VỀ THÔNG TIN: $title",
-        "HOOK: Có vài điểm quan trọng về thông tin này các bác cần lưu ý kỹ trước khi xuống tiền mua nhà ở xã hội nhé!",
-        "NOI DUNG CHINH: Thông tin đăng trên ${source}: $desc. Dưới góc nhìn thực tế, mình thấy vướng mắc pháp lý và dòng tiền ở đây cần được xem xét rất kỹ.",
-        "Lời khuyên cho mọi người lúc này là: Hãy luôn đặt tính pháp lý và sự minh bạch lên hàng đầu, tìm hiểu kỹ quy trình trước khi quyết định.",
-        "CTA: Mọi người nghĩ sao về vấn đề này? Cùng thảo luận ở phần bình luận bên dưới và follow kênh nhé!"
+        "GÓC NHÌN THỰC TẾ VỀ THÔNG TIN: $($title.ToUpper())!",
+        "",
+        "Có vài điểm quan trọng về thông tin này các bác cần lưu ý kỹ trước khi xuống tiền mua nhà ở xã hội nhé! Thông tin đăng trên ${source}: $desc. Dưới góc nhìn thực tế, mình thấy vướng mắc pháp lý và dòng tiền ở đây cần được xem xét rất kỹ. Lời khuyên cho mọi người lúc này là: Hãy luôn đặt tính pháp lý và sự minh bạch lên hàng đầu, tìm hiểu kỹ quy trình trước khi quyết định. Mọi người nghĩ sao về vấn đề này? Cùng thảo luận ở phần bình luận bên dưới và follow kênh nhé!"
     ) -join "`r`n"
 
     $fbContent = @"

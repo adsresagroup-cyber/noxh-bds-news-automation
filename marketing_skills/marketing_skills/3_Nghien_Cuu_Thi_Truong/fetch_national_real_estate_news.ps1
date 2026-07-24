@@ -393,11 +393,9 @@ function Get-NewsScript ($title, $desc, $source, $duration) {
     ) -join "`r`n"
     
     $voiceoff = @(
-        "TIEU DE: XU HƯỚNG MỚI: $title - CƠ HỘI NÀO CHO NHÀ ĐẦU TƯ?",
-        "HOOK: Các bác đã nghe thông tin nóng hổi này về thị trường bất động sản chưa?",
-        "NOI DUNG CHINH: Theo nguồn tin mới nhận từ ${source}: $desc.",
-        "Đây là thông tin cực kỳ quan trọng, tác động trực tiếp đến xu hướng dòng tiền và các quyết định mua bán lúc này.",
-        "CTA: Các bác đánh giá thế nào về diễn biến này? Hãy để lại bình luận thảo luận bên dưới và theo dõi kênh nhé!"
+        "XU HƯỚNG MỚI: $($title.ToUpper()) - CƠ HỘI NÀO CHO NHÀ ĐẦU TƯ!",
+        "",
+        "Các bác đã nghe thông tin nóng hổi này về thị trường bất động sản chưa? Theo nguồn tin mới nhận từ ${source}: $desc. Đây là thông tin cực kỳ quan trọng, tác động trực tiếp đến xu hướng dòng tiền và các quyết định mua bán lúc này. Các bác đánh giá thế nào về diễn biến này? Hãy để lại bình luận thảo luận bên dưới và theo dõi kênh nhé!"
     ) -join "`r`n"
 
     $fbContent = @"
@@ -424,11 +422,9 @@ function Get-ExpertScript ($title, $desc, $source, $duration) {
     ) -join "`r`n"
     
     $voiceoff = @(
-        "TIEU DE: GÓC NHÌN CHUYÊN GIA VỀ THÔNG TIN: $title",
-        "HOOK: Có vài khía cạnh sâu sắc về thông tin này mà nhà đầu tư cần biết rõ để tối ưu dòng tiền của mình nhé!",
-        "NOI DUNG CHINH: Thông tin đăng trên ${source}: $desc. Dưới góc phân tích của mình, đây vừa là cơ hội nhưng cũng đi kèm rủi ro pháp lý cần cân nhắc kỹ.",
-        "Lời khuyên cho các bác lúc này là: Hãy bám sát quy hoạch hạ tầng thực tế và pháp lý dự án trước khi xuống tiền.",
-        "CTA: Các bác nghĩ sao về góc nhìn này? Cùng thảo luận dưới bình luận và follow kênh nhé!"
+        "GÓC NHÌN CHUYÊN GIA VỀ THÔNG TIN: $($title.ToUpper())!",
+        "",
+        "Có vài khía cạnh sâu sắc về thông tin này mà nhà đầu tư cần biết rõ để tối ưu dòng tiền của mình nhé! Thông tin đăng trên ${source}: $desc. Dưới góc phân tích của mình, đây vừa là cơ hội nhưng cũng đi kèm rủi ro pháp lý cần cân nhắc kỹ. Lời khuyên cho các bác lúc này là: Hãy bám sát quy hoạch hạ tầng thực tế và pháp lý dự án trước khi xuống tiền. Các bác nghĩ sao về góc nhìn này? Cùng thảo luận dưới bình luận và follow kênh nhé!"
     ) -join "`r`n"
 
     $fbContent = @"
