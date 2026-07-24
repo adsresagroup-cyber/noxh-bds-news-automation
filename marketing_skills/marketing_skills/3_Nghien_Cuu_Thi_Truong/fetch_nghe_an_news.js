@@ -286,7 +286,6 @@ async function run() {
 Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xác:
 {
   "angle": "Tin tức / Chuyên gia chia sẻ",
-  "visuals": "Mô tả chi tiết từng cảnh quay minh họa phù hợp, khớp với từng câu thoại (hạ tầng giao thông, khu công nghiệp VSIP Nghệ An, dự án đô thị Vinh - Cửa Lò, bản đồ quy hoạch...)",
   "script": "TIÊU ĐỀ: [Tiêu đề giật tít thu hút 10-15 từ]\\n\\n[HOOK]\\n[Lời thoại Hook cực ngắn, dưới 15 từ, 3-6s đầu]\\n\\n[BODY]\\n[Lời thoại phân tích sâu, đắt giá, kịch tính 180-220 từ]\\n\\n[CTA]\\n[Lời thoại kêu gọi thảo luận mở và bình luận 30-40 từ]",
   "fb_content": "Nội dung bài đăng Facebook ngắn từ 3-5 dòng, dòng 1 có emoji 🔥 hoặc ⁉️ giật tít in hoa, các dòng sau tóm tắt thông tin đắt giá nhất và câu hỏi khảo sát thảo luận."
 }
@@ -472,7 +471,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
     const defaultSheetTitle = sheetMetadata.sheets[0].properties.title;
 
     // 6.6 Prepare values to write
-    const headersRow = ['STT', 'Tiêu đề bài báo', 'Đường dẫn [URL]', 'Phong cách / Góc nhìn', 'Mô tả hình ảnh (Visuals)', 'Kịch bản Voice-off (Lời thoại)', 'Nội dung đăng Facebook (Content FB)'];
+    const headersRow = ['STT', 'Tiêu đề bài báo', 'Đường dẫn [URL]', 'Phong cách / Góc nhìn', 'Kịch bản Voice-off (Lời thoại)', 'Nội dung đăng Facebook (Content FB)'];
     const values = [headersRow];
     results.forEach(item => {
         values.push([
@@ -480,7 +479,6 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
             item.title,
             item.url,
             item.angle,
-            item.visuals,
             item.script,
             item.fb_content
         ]);
@@ -488,7 +486,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
 
     // 6.7 Write values
     console.log("Đang ghi dữ liệu vào Google Sheet...");
-    const rangeStr = `'${defaultSheetTitle}'!A1:G${values.length}`;
+    const rangeStr = `'${defaultSheetTitle}'!A1:F${values.length}`;
     const updateUri = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rangeStr)}?valueInputOption=USER_ENTERED`;
     
     const updateResponse = await fetch(updateUri, {
@@ -531,7 +529,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                         startRowIndex: 0,
                         endRowIndex: 1,
                         startColumnIndex: 0,
-                        endColumnIndex: 7
+                        endColumnIndex: 6
                     },
                     cell: {
                         userEnteredFormat: {
@@ -557,7 +555,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                         startRowIndex: 1,
                         endRowIndex: values.length,
                         startColumnIndex: 0,
-                        endColumnIndex: 7
+                        endColumnIndex: 6
                     },
                     cell: {
                         userEnteredFormat: {
