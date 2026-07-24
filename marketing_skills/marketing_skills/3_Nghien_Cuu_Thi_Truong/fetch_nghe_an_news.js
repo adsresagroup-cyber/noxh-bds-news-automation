@@ -183,7 +183,7 @@ async function run() {
     }
 
     // 1. Load API Key (Check process.env first for GitHub Actions)
-    let geminiApiKey = process.env.GEMINI_API_KEY || "";
+    let geminiApiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, '');
     if (!geminiApiKey && fs.existsSync(envPath)) {
         const envText = fs.readFileSync(envPath, 'utf8');
         const lines = envText.split(/\r?\n/);
@@ -192,14 +192,17 @@ async function run() {
             if (trimmed && !trimmed.startsWith('#')) {
                 const match = trimmed.match(/^GEMINI_API_KEY=(.*)$/);
                 if (match) {
-                    geminiApiKey = match[1].trim();
+                    geminiApiKey = match[1].trim().replace(/^["']|["']$/g, '');
+                    break;
                 }
             }
         }
     }
 
     if (!geminiApiKey) {
-        throw new Error("GEMINI_API_KEY not found in environment or .env file");
+        console.warn("⚠️ KHÔNG TÌM THẤY GEMINI_API_KEY! AI sẽ rơi vào hàm mẫu dự phòng!");
+    } else {
+        console.log(`Đã kết nối GEMINI_API_KEY thành công (Độ dài: ${geminiApiKey.length} ký tự).`);
     }
 
     // 2. Set up Time Range (24h/48h window up to current execution time)

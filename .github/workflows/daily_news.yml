@@ -9,6 +9,8 @@ on:
 jobs:
   run-crawlers:
     runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout Code
@@ -25,8 +27,10 @@ jobs:
           mkdir -p "meta_ads_api"
           echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta ads api/token.json"
           echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta_ads_api/token.json"
+          echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > "token.json"
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > "meta ads api/.env"
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > "meta_ads_api/.env"
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > ".env"
 
       - name: Run National Real Estate News Crawler
         run: |
@@ -38,8 +42,8 @@ jobs:
 
       - name: Run Nghe An Real Estate News Crawler
         run: |
-          pwsh -File ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_nghe_an_news.ps1
+          node ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_nghe_an_news.js
 
       - name: Run HCM Real Estate News Crawler
         run: |
-          pwsh -File ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_hcm_news.ps1
+          node ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_hcm_news.js

@@ -1,4 +1,4 @@
-﻿# Ensure UTF-8 Output Encoding
+# Ensure UTF-8 Output Encoding
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # Set paths dynamically
@@ -79,18 +79,25 @@ if (-not (Test-Path $tokenPath)) {
 $tokenData = Get-Content $tokenPath -Raw | ConvertFrom-Json
 $accessToken = $tokenData.token
 
-# Load Gemini API Key from .env file
-$envPath = Join-Path $metaAdsApiDir ".env"
-$geminiApiKey = ""
-if (Test-Path $envPath) {
-    Get-Content $envPath | ForEach-Object {
-        $line = $_.Trim()
-        if ($line -and -not $line.StartsWith("#")) {
-            if ($line -match "^GEMINI_API_KEY=(.*)$") {
-                $geminiApiKey = $Matches[1].Trim()
+# Load Gemini API Key from environment or .env file
+$geminiApiKey = $env:GEMINI_API_KEY
+if ([string]::IsNullOrEmpty($geminiApiKey)) {
+    $envPath = Join-Path $metaAdsApiDir ".env"
+    if (Test-Path $envPath) {
+        Get-Content $envPath | ForEach-Object {
+            $line = $_.Trim()
+            if ($line -and -not $line.StartsWith("#")) {
+                if ($line -match "^GEMINI_API_KEY=(.*)$") {
+                    $geminiApiKey = $Matches[1].Trim().Trim('"').Trim("'")
+                }
             }
         }
     }
+}
+if ([string]::IsNullOrEmpty($geminiApiKey)) {
+    Write-Warning "X CANH BAO: GEMINI_API_KEY rong! Khong the goi AI!"
+} else {
+    Write-Host "Da ket noi GEMINI_API_KEY (Do dai: $($geminiApiKey.Length) ky tu)." -ForegroundColor Green
 }
 
 # Helper to automatically refresh Google OAuth token if expired (401 Unauthorized)
