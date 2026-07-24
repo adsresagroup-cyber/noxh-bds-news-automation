@@ -1168,7 +1168,7 @@ Write-Host "Dang chuan bi du lieu gui len Google Sheets..." -ForegroundColor Cya
 $rows = @()
 $values = @()
 # Header row
-$headersRow = @("STT", "Tiêu đề", "Đường dẫn", "Phong cách", "Kịch bản Voice-off (Lời thoại)", "Nội dung đăng Facebook (Content FB)")
+$headersRow = @("STT", "Tiêu đề", "Đường dẫn", "Phong cách", "Mô tả hình ảnh (Visuals)", "Kịch bản Voice-off (Lời thoại)", "Nội dung đăng Facebook (Content FB)")
 $values += ,$headersRow
 
 $styles = @("Tin tức", "Tin tức", "Chuyên gia chia sẻ", "Tin tức", "Tin tức", "Chuyên gia chia sẻ")
@@ -1221,6 +1221,7 @@ Bình luận ý kiến của bạn bên dưới nhé!
             "Tiêu đề" = $item.Title
             "Đường dẫn" = $item.Link
             "Phong cách" = $style
+            "Mô tả hình ảnh (Visuals)" = $scriptObj.Visuals
             "Kịch bản Voice-off (Lời thoại)" = $scriptObj.Voiceover
             "Nội dung đăng Facebook (Content FB)" = $fbContent
         }
@@ -1230,6 +1231,7 @@ Bình luận ý kiến của bạn bên dưới nhé!
             $item.Title,
             $item.Link,
             $style,
+            $scriptObj.Visuals,
             $scriptObj.Voiceover,
             $fbContent
         )
@@ -1240,6 +1242,7 @@ Bình luận ý kiến của bạn bên dưới nhé!
             "Tiêu đề" = $item.Title
             "Đường dẫn" = $item.Link
             "Phong cách" = ""
+            "Mô tả hình ảnh (Visuals)" = ""
             "Kịch bản Voice-off (Lời thoại)" = ""
             "Nội dung đăng Facebook (Content FB)" = ""
         }
@@ -1248,6 +1251,7 @@ Bình luận ý kiến của bạn bên dưới nhé!
             $idx,
             $item.Title,
             $item.Link,
+            "",
             "",
             "",
             ""
@@ -1388,7 +1392,7 @@ try {
      # 6. Write Data to the default sheet
     Write-Host "Dang ghi du lieu vao Google Sheet..." -ForegroundColor Cyan
     # Build range string dynamically using the retrieved default sheet title
-    $rangeStr = "'$sheetTitle'!A1:F$($values.Count)"
+    $rangeStr = "'$sheetTitle'!A1:G$($values.Count)"
     $updateBody = @{
         range = $rangeStr
         majorDimension = "ROWS"
@@ -1421,7 +1425,7 @@ try {
                         startRowIndex = 0
                         endRowIndex = 1
                         startColumnIndex = 0
-                        endColumnIndex = 6
+                        endColumnIndex = 7
                     }
                     cell = @{
                         userEnteredFormat = @{
@@ -1455,7 +1459,7 @@ try {
                         startRowIndex = 1
                         endRowIndex = $values.Count
                         startColumnIndex = 0
-                        endColumnIndex = 6
+                        endColumnIndex = 7
                     }
                     cell = @{
                         userEnteredFormat = @{
