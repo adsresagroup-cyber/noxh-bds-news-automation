@@ -1198,15 +1198,24 @@ $additionalHint
                 $cleanedContent = $rawContent -replace "\r?\n(?!\s*(\`"Visuals\`"|\`"Voiceover\`"|\`"FacebookContent\`"|\}))", " "
                 $parsed = $cleanedContent | ConvertFrom-Json
                 
-                # Accept parsed AI script
+                # Accept parsed AI script and enforce 230-290 words
                 if ($null -ne $parsed -and -not [string]::IsNullOrEmpty($parsed.Voiceover)) {
                     $lastParsed = $parsed
                     $rawWords = $parsed.Voiceover -split '\s+' | Where-Object { $_ -ne "" }
                     $rawWordCount = $rawWords.Count
                     
-                    Write-Host "   -> Thu thap kịch bản hop le tu AI ($rawWordCount tu) o lan thu $attempt" -ForegroundColor Green
-                    if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
-                    return $parsed
+                    if ($rawWordCount -ge 230 -and $rawWordCount -le 290) {
+                        Write-Host "   -> Thu thap kịch bản dat chuan 230-290 tu tu AI ($rawWordCount tu) o lan thu $attempt" -ForegroundColor Green
+                        if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
+                        return $parsed
+                    } else {
+                        Write-Host "   -> Kich ban o lan $attempt co $rawWordCount tu (chua dat 230-290 tu). Dang gui AI dieu chinh..." -ForegroundColor Yellow
+                        if ($rawWordCount -lt 230) {
+                            $additionalHint = "[YÊU CẦU ĐIỀU CHỈNH ĐỘ DÀI]`nKịch bản vừa viết chỉ có $rawWordCount từ (dưới 230 từ). Vui lòng bổ sung thêm các phân tích chuyên sâu tác động thực tế, cơ hội đầu tư, rủi ro pháp lý để tổng số từ NẰM CHÍNH XÁC TRONG KHOẢNG TỪ 230 ĐẾN 290 TỪ TIẾNG VIỆT."
+                        } else {
+                            $additionalHint = "[YÊU CẦU ĐIỀU CHỈNH ĐỘ DÀI]`nKịch bản vừa viết có $rawWordCount từ (vượt quá 290 từ). Vui lòng cô đọng lại lời thoại để tổng số từ NẰM CHÍNH XÁC TRONG KHOẢNG TỪ 230 ĐẾN 290 TỪ TIẾNG VIỆT."
+                        }
+                    }
                 }
             }
         } catch {

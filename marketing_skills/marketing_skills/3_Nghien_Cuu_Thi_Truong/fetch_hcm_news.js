@@ -323,6 +323,52 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
             const cleanedContent = cleanJsonString(rawContent);
             const analysis = JSON.parse(cleanedContent);
             
+            let finalScript = analysis.script || "";
+            const countWords = (str) => (!str ? 0 : str.trim().split(/\s+/).filter(w => w.length > 0).length);
+            let wc = countWords(finalScript);
+            
+            let attempts = 0;
+            while ((wc < 230 || wc > 290) && attempts < 2) {
+                attempts++;
+                console.log(`   -> Kịch bản bài ${i+1} có ${wc} từ (chưa đạt mốc 230-290 từ). Đang gửi AI điều chỉnh lần ${attempts}...`);
+                const hint = wc < 230 
+                    ? `Kịch bản trước bạn viết chỉ có ${wc} từ (dưới 230 từ). Hãy mở rộng thêm các đoạn phân tích chuyên sâu tác động thực tế, pháp lý, cơ hội đầu tư để tổng số từ NẰM CHÍNH XÁC TRONG KHOẢNG TỪ 230 ĐẾN 290 TỪ TIẾNG VIỆT!`
+                    : `Kịch bản trước bạn viết có ${wc} từ (vượt quá 290 từ). Hãy cô đọng lại lời thoại để tổng số từ NẰM CHÍNH XÁC TRONG KHOẢNG TỪ 230 ĐẾN 290 TỪ TIẾNG VIỆT!`;
+                
+                try {
+                    const retryRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${geminiApiKey}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            model: "openai/gpt-4o-mini",
+                            messages: [
+                                { role: "system", content: systemInstruction },
+                                { role: "user", content: `Tiêu đề: ${art.title}\nTóm tắt sơ bộ: ${art.description}` },
+                                { role: "assistant", content: rawContent },
+                                { role: "user", content: hint }
+                            ],
+                            response_format: { type: "json_object" },
+                            temperature: 0.4
+                        })
+                    });
+
+                    if (retryRes.ok) {
+                        const retryData = await retryRes.json();
+                        const retryAnalysis = JSON.parse(cleanJsonString(retryData.choices[0].message.content));
+                        if (retryAnalysis.script) {
+                            finalScript = retryAnalysis.script;
+                            wc = countWords(finalScript);
+                            console.log(`   -> Kết quả sau lần điều chỉnh ${attempts}: ${wc} từ.`);
+                        }
+                    }
+                } catch (retryErr) {
+                    console.warn(`Không thể điều chỉnh độ dài lần ${attempts}:`, retryErr.message);
+                }
+            }
+
             let fbText = "";
             if (analysis.fb_content) {
                 fbText = analysis.fb_content.trim() + "\n\n------------------------------\n🏠 TongkhoBDS.com - Kho Bất động sản lớn nhất Việt Nam\n🏢 Địa chỉ: 51 Kim Mã, Phường Giảng Võ, Hà Nội\n☎️ Hotline: 1900.988.998\n#batdongsan #tongkhobatdongsan #tintuc #24h";
@@ -331,7 +377,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                 title: art.title,
                 url: art.url,
                 angle: analysis.angle || "Tin tức BĐS TP.HCM",
-                script: analysis.script || "",
+                script: finalScript,
                 fb_content: fbText
             });
         } catch (e) {
