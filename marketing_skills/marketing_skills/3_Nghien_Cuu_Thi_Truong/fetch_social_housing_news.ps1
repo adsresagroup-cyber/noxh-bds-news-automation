@@ -1117,20 +1117,15 @@ $additionalHint
                 $cleanedContent = $rawContent -replace "\r?\n(?!\s*(\`"Visuals\`"|\`"Voiceover\`"|\`"FacebookContent\`"|\}))", " "
                 $parsed = $cleanedContent | ConvertFrom-Json
                 
-                # Validate raw word count of Voiceover
+                # Accept parsed AI script
                 if ($null -ne $parsed -and -not [string]::IsNullOrEmpty($parsed.Voiceover)) {
                     $lastParsed = $parsed
                     $rawWords = $parsed.Voiceover -split '\s+' | Where-Object { $_ -ne "" }
                     $rawWordCount = $rawWords.Count
                     
-                    if ($rawWordCount -ge 230 -and $rawWordCount -le 290) {
-                        Write-Host "   -> Thu thap kịch bản hop le tu nhien ($rawWordCount tu) o lan thu $attempt" -ForegroundColor Green
-                        if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
-                        return $parsed
-                    } else {
-                        Write-Warning "   -> Kịch bản o lan thu ${attempt} co do dai chua hop le: $rawWordCount tu (yeu cau: 230-290). Dang thu lai..."
-                        $additionalHint = "[CẢNH BÁO SỬA LỖI ĐỘ DÀI]`nKịch bản trước bạn viết có độ dài $rawWordCount từ. Vui lòng viết lại kịch bản Voiceover sao cho độ dài tự nhiên nằm trong khoảng từ 230 đến 290 từ tiếng Việt. Hãy đảm bảo nội dung hoàn chỉnh, mạch lạc và không bị cắt ngang giữa chừng."
-                    }
+                    Write-Host "   -> Thu thap kịch bản hop le tu AI ($rawWordCount tu) o lan thu $attempt" -ForegroundColor Green
+                    if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
+                    return $parsed
                 }
             }
         } catch {
@@ -1145,9 +1140,6 @@ $additionalHint
     }
     
     if ($null -ne $lastParsed) {
-        Write-Warning "Khong the sinh kịch bản tu nhien dung do dai sau $maxAttempts lan thu. Su dung kịch bản cuoi cung va tu dong dieu chinh bang phuong phap cat gop cau..."
-        $adjustedVoiceover = Get-ConformingVoiceover -rawVoiceover $lastParsed.Voiceover
-        $lastParsed.Voiceover = $adjustedVoiceover
         return $lastParsed
     }
     
