@@ -1,4 +1,4 @@
-﻿# Ensure UTF-8 Output Encoding
+# Ensure UTF-8 Output Encoding
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # Set paths dynamically
@@ -17,7 +17,12 @@ while ($current -and (Split-Path $current -Leaf) -ne "") {
     $current = Split-Path $current -Parent
 }
 
-if ($null -ne $antigravityIdePath) {
+if ($env:GITHUB_WORKSPACE) {
+    $metaAdsApiDir = Join-Path $env:GITHUB_WORKSPACE "meta ads api"
+    if (-not (Test-Path $metaAdsApiDir)) {
+        $metaAdsApiDir = Join-Path $env:GITHUB_WORKSPACE "meta_ads_api"
+    }
+} elseif ($null -ne $antigravityIdePath) {
     $metaAdsApiDir = Join-Path $antigravityIdePath "meta ads api"
     if (-not (Test-Path $metaAdsApiDir)) {
         $metaAdsApiDir = Join-Path $antigravityIdePath "meta_ads_api"

@@ -114,9 +114,28 @@ function getFormattedDate(date, format) {
 async function run() {
     console.log("=== BẮT ĐẦU QUY TRÌNH CÀO TIN TỨC BĐS TP. HỒ CHÍ MINH ===");
     
-    const tokenPath = path.join('c:', 'Users', 'Admin', '.antigravity-ide', 'meta ads api', 'token.json');
-    const envPath = path.join('c:', 'Users', 'Admin', '.antigravity-ide', 'meta ads api', '.env');
-    const historyPath = path.join('c:', 'Users', 'Admin', '.antigravity-ide', 'marketing_skills', 'marketing_skills', '3_Nghien_Cuu_Thi_Truong', 'reports', 'scraped_articles_history_hcm.json');
+    let rootDir = path.resolve(__dirname, '..', '..', '..');
+    if (process.env.GITHUB_WORKSPACE) {
+        rootDir = process.env.GITHUB_WORKSPACE;
+    }
+    
+    let tokenPath = path.join(rootDir, 'meta ads api', 'token.json');
+    if (!fs.existsSync(tokenPath)) {
+        tokenPath = path.join(rootDir, 'meta_ads_api', 'token.json');
+    }
+    if (!fs.existsSync(tokenPath)) {
+        tokenPath = path.join('c:', 'Users', 'Admin', '.antigravity-ide', 'meta ads api', 'token.json');
+    }
+
+    let envPath = path.join(rootDir, 'meta ads api', '.env');
+    if (!fs.existsSync(envPath)) {
+        envPath = path.join(rootDir, 'meta_ads_api', '.env');
+    }
+    if (!fs.existsSync(envPath)) {
+        envPath = path.join('c:', 'Users', 'Admin', '.antigravity-ide', 'meta ads api', '.env');
+    }
+
+    const historyPath = path.join(__dirname, 'reports', 'scraped_articles_history_hcm.json');
 
     if (!fs.existsSync(tokenPath)) {
         throw new Error(`Token file not found at ${tokenPath}`);
