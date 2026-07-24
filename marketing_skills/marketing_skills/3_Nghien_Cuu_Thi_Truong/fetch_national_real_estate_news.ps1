@@ -88,12 +88,17 @@ if ([string]::IsNullOrEmpty($geminiApiKey)) {
             $line = $_.Trim()
             if ($line -and -not $line.StartsWith("#")) {
                 if ($line -match "^GEMINI_API_KEY=(.*)$") {
-                    $geminiApiKey = $Matches[1].Trim().Trim('"').Trim("'")
+                    $geminiApiKey = $Matches[1]
                 }
             }
         }
     }
 }
+
+if ($null -ne $geminiApiKey) {
+    $geminiApiKey = [regex]::Replace($geminiApiKey, "[\r\n`"`'\s]", "").Trim()
+}
+
 if ([string]::IsNullOrEmpty($geminiApiKey)) {
     Write-Warning "X CANH BAO: GEMINI_API_KEY rong! Khong the goi AI!"
 } else {
@@ -1183,8 +1188,9 @@ $additionalHint
         }
         
         $bodyJson = ConvertTo-Json -InputObject $bodyObj -Depth 10
+        $cleanApiKey = [regex]::Replace($geminiApiKey, "[\r\n`"`'\s]", "").Trim()
         $headers = @{
-            "Authorization" = "Bearer $geminiApiKey"
+            "Authorization" = "Bearer $cleanApiKey"
             "Content-Type" = "application/json; charset=utf-8"
         }
         

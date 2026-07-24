@@ -25,12 +25,12 @@ jobs:
         run: |
           mkdir -p "meta ads api"
           mkdir -p "meta_ads_api"
-          echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta ads api/token.json"
-          echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta_ads_api/token.json"
-          echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > "token.json"
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > "meta ads api/.env"
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > "meta_ads_api/.env"
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > ".env"
+          printf '%s' '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta ads api/token.json"
+          printf '%s' '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta_ads_api/token.json"
+          printf '%s' '${{ secrets.GOOGLE_TOKEN_JSON }}' > "token.json"
+          printf 'GEMINI_API_KEY=%s' '${{ secrets.GEMINI_API_KEY }}' > "meta ads api/.env"
+          printf 'GEMINI_API_KEY=%s' '${{ secrets.GEMINI_API_KEY }}' > "meta_ads_api/.env"
+          printf 'GEMINI_API_KEY=%s' '${{ secrets.GEMINI_API_KEY }}' > ".env"
 
       - name: Run National Real Estate News Crawler
         run: |
