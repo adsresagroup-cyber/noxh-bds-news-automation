@@ -294,7 +294,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    model: "google/gemini-2.5-flash",
+                    model: "openai/gpt-4o-mini",
                     messages: [
                         { role: "system", content: systemInstruction },
                         { role: "user", content: `Tiêu đề: ${art.title}\nTóm tắt sơ bộ: ${art.description}` }

@@ -305,7 +305,7 @@ Hãy chọn ra chính xác 6 tin tức tốt nhất theo các tiêu chí trên v
 "@
 
     $bodyObj = @{
-        model = "google/gemini-2.5-flash"
+        model = "openai/gpt-4o-mini"
         messages = @(
             @{
                 role = "system"
@@ -1161,7 +1161,7 @@ $additionalHint
 "@
      
         $bodyObj = @{
-            model = "google/gemini-2.5-flash"
+            model = "openai/gpt-4o-mini"
             messages = @(
                 @{
                     role = "system"
