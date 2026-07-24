@@ -1345,9 +1345,16 @@ function Get-NextSpreadsheetTitle ($baseTitle, $folderId) {
     }
 }
 
-# 4. Create Daily Google Spreadsheet inside the target folder
-$timeStr = Get-Date -Format 'H"h"mm'
-$dateStr = Get-Date -Format 'd/M'
+# 4. Create Daily Google Spreadsheet inside the target folder (Force Vietnam Timezone UTC+7)
+$vnTz = $null
+try {
+    $vnTz = [TimeZoneInfo]::FindSystemTimeZoneById("SE Asia Standard Time")
+} catch {
+    $vnTz = [TimeZoneInfo]::FindSystemTimeZoneById("Asia/Ho_Chi_Minh")
+}
+$vnTime = [TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow, $vnTz)
+$timeStr = $vnTime.ToString('HH"h"mm')
+$dateStr = $vnTime.ToString('dd/MM')
 $baseTitle = "$timeStr - $dateStr - Tin tuc NOXH"
 $spreadsheetTitle = Get-NextSpreadsheetTitle -baseTitle $baseTitle -folderId $targetFolderId
 

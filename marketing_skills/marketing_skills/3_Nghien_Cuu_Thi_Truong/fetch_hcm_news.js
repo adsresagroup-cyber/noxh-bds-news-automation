@@ -96,19 +96,26 @@ function cleanJsonString(str) {
     return result;
 }
 
-// Format date helper
+// Format date helper (Force Vietnam Timezone UTC+7)
 function getFormattedDate(date, format) {
-    const pad = (n) => n.toString().padStart(2, '0');
-    const d = date.getDate();
-    const m = date.getMonth() + 1;
-    const y = date.getFullYear();
-    const h = date.getHours();
-    const min = date.getMinutes();
+    const dObj = date || new Date();
+    const options = { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false };
+    const formatter = new Intl.DateTimeFormat('en-GB', options);
+    const parts = formatter.formatToParts(dObj);
+    const map = {};
+    parts.forEach(p => map[p.type] = p.value);
+    
+    const d = map.day;
+    const m = map.month;
+    const y = map.year;
+    let h = map.hour;
+    if (h === '24') h = '00';
+    const min = map.minute;
 
     if (format === 'sheetname') {
-        return `${pad(h)}h${pad(min)} - ${pad(d)}/${pad(m)} - Tin tức BĐS TP.HCM`;
+        return `${h}h${min} - ${d}/${m} - Tin tức BĐS TP.HCM`;
     }
-    return `${pad(d)}/${pad(m)}/${y} ${pad(h)}:${pad(min)}`;
+    return `${d}/${m}/${y} ${h}:${min}`;
 }
 
 async function run() {
