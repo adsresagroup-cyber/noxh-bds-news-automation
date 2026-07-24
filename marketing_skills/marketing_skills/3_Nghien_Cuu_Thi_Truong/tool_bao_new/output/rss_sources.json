@@ -1,0 +1,34 @@
+[
+  {
+    "url": "https://vnexpress.net/rss/bat-dong-san.rss",
+    "name": "VnExpress"
+  },
+  {
+    "url": "https://vietnamnet.vn/rss/bat-dong-san.rss",
+    "name": "VietnamNet"
+  },
+  {
+    "url": "https://cafef.vn/bat-dong-san.rss",
+    "name": "CafeF"
+  },
+  {
+    "url": "https://dantri.com.vn/rss/bat-dong-san.rss",
+    "name": "Dân Trí"
+  },
+  {
+    "url": "https://tuoitre.vn/rss/kinh-doanh.rss",
+    "name": "Tuổi Trẻ"
+  },
+  {
+    "url": "https://laodong.vn/rss/bat-dong-san.rss",
+    "name": "Lao Động"
+  },
+  {
+    "url": "https://baoxaydung.vn/rss/bat-dong-san.rss",
+    "name": "Báo Xây Dựng"
+  },
+  {
+    "url": "https://batdongsan.baoxaydung.vn/",
+    "name": "BDS xây dựng"
+  }
+]

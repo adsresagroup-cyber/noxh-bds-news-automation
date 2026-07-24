@@ -1,0 +1,9 @@
+node_modules/
+extensions/
+*.log
+.env
+token.json
+*.html
+*.pdf
+*.xlsx
+*.csv

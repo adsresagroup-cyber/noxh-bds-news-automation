@@ -1,0 +1,45 @@
+name: Daily Real Estate News Automation
+
+on:
+  schedule:
+    # Chạy lúc 7h30 sáng Việt Nam hàng ngày (00:30 UTC)
+    - cron: '30 0 * * *'
+  workflow_dispatch: # Cho phép bấm nút kích hoạt thủ công trên web GitHub
+
+jobs:
+  run-crawlers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore Credentials from Secrets
+        run: |
+          mkdir -p "meta ads api"
+          mkdir -p "meta_ads_api"
+          echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta ads api/token.json"
+          echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta_ads_api/token.json"
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > "meta ads api/.env"
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > "meta_ads_api/.env"
+
+      - name: Run National Real Estate News Crawler
+        run: |
+          pwsh -File ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_national_real_estate_news.ps1
+
+      - name: Run Social Housing (NOXH) News Crawler
+        run: |
+          pwsh -File ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_social_housing_news.ps1
+
+      - name: Run Nghe An Real Estate News Crawler
+        run: |
+          pwsh -File ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_nghe_an_news.ps1
+
+      - name: Run HCM Real Estate News Crawler
+        run: |
+          pwsh -File ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_hcm_news.ps1
