@@ -214,7 +214,7 @@ async function run() {
                 if (isNaN(pubDate.getTime())) continue;
                 
                 if (matchesHcm(cleanTitle, cleanDesc) && isRealEstateOrInfrastructure(cleanTitle, cleanDesc)) {
-                    const trimmedLink = link.trim();
+                    const trimmedLink = clean(link);
                     if (!articles.some(a => a.url === trimmedLink)) {
                         articles.push({
                             title: cleanTitle,
