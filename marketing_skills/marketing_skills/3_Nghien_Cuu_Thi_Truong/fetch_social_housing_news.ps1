@@ -1,4 +1,4 @@
-# Ensure UTF-8 Output Encoding
+﻿# Ensure UTF-8 Output Encoding
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # Set paths dynamically
