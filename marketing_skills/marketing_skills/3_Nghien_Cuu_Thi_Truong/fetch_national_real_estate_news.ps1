@@ -1,4 +1,4 @@
-﻿# Ensure UTF-8 Output Encoding
+# Ensure UTF-8 Output Encoding
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # Set paths dynamically
@@ -1152,7 +1152,7 @@ Mô tả tóm tắt: $desc
 Phong cách: $style
 
 [YÊU CẦU BẮT BUỘC VỀ ĐỘ DÀI & ĐỊNH DẠNG]
-1. Dòng 1: CÂU TIÊU ĐỀ IN HOA TOÀN BỘ KÈM DẤU CHẤM CẢM (!).
+1. Dòng 1: CÂU TIÊU ĐỀ HOOK CỰC KỲ GIẬT GÂN GÂY TÒ MÒ (SCROLL STOPPER), VIẾT IN HOA TOÀN BỘ KÈM DẤU CHẤM CẢM (!). TUYỆT ĐỐI KHÔNG COPY NGUYÊN VĂN HOẶC LẶP LẠI TIÊU ĐỀ BÀI BÁO GỐC KHÔ KHAN! Hãy biến hóa thành câu giật tít kích thích tò mò, cảnh báo rủi ro hoặc cơ hội đầu tư.
 2. Xuống dòng 2 lần, viết phần LỜI THOẠI ĐỌC VOICE-OFF LIỀN MẠCH từ đầu đến cuối.
 3. TUYỆT ĐỐI KHÔNG GHI CÁC TỪ 'TIÊU ĐỀ:', '[HOOK]', '[BODY]', '[CTA]' TRONG NỘI DUNG KỊCH BẢN.
 4. ĐỘ DÀI BẮT BUỘC: Tổng số từ phần Voiceover (Tiêu đề + Lời thoại) PHẢI NẰM TRONG KHOẢNG 230 ĐẾN 290 TỪ TIẾNG VIỆT. TUYỆT ĐỐI KHÔNG VIẾT NGẮN DƯỚI 230 TỪ. AI cần mở rộng phân tích chuyên sâu các yếu tố tác động vĩ mô, pháp lý, bài học kinh nghiệm và góc nhìn đa chiều để đảm bảo đủ từ 230-290 từ.
@@ -1175,7 +1175,7 @@ $additionalHint
             response_format = @{
                 type = "json_object"
             }
-            temperature = 0.1
+            temperature = 0.5
         }
         
         $bodyJson = ConvertTo-Json -InputObject $bodyObj -Depth 10
