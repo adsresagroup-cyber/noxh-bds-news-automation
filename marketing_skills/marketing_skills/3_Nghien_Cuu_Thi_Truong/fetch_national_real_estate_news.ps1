@@ -42,24 +42,15 @@ if (-not (Test-Path $reportsDir)) {
 $today = Get-Date -Format "yyyyMMdd"
 $reportFileCsv = Join-Path $reportsDir "national_real_estate_report_$today.csv"
 
-# Calculate the 7:30 AM to 7:30 AM date window for filtering (Monday includes Sunday/weekend)
-$now = Get-Date
-$today730AM = Get-Date -Hour 7 -Minute 30 -Second 0
+# Calculate Vietnam time (UTC+7) and sliding window
+$utcNow = [DateTime]::UtcNow
+$now = $utcNow.AddHours(7)
+$endTime = $now
 
-if ($now -ge $today730AM) {
-    $endTime = $today730AM
-    if ($now.DayOfWeek -eq [System.DayOfWeek]::Monday) {
-        $startTime = $today730AM.AddDays(-2)
-    } else {
-        $startTime = $today730AM.AddDays(-1)
-    }
+if ($now.DayOfWeek -eq [System.DayOfWeek]::Monday) {
+    $startTime = $now.AddHours(-72)
 } else {
-    $endTime = $today730AM.AddDays(-1)
-    if ($now.DayOfWeek -eq [System.DayOfWeek]::Monday) {
-        $startTime = $today730AM.AddDays(-3)
-    } else {
-        $startTime = $today730AM.AddDays(-2)
-    }
+    $startTime = $now.AddHours(-24)
 }
 
 Write-Host "--- QUY TRÌNH TIN TỨC BẤT ĐỘNG SẢN TOÀN QUỐC ---" -ForegroundColor Green
