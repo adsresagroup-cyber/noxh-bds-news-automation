@@ -40,7 +40,8 @@ if (!fs.existsSync(tokenPath)) {
     process.exit(1);
 }
 
-const tokenData = JSON.parse(fs.readFileSync(tokenPath, 'utf8'));
+const tokenRaw = fs.readFileSync(tokenPath, 'utf8').replace(/^\uFEFF/, '');
+const tokenData = JSON.parse(tokenRaw);
 let accessToken = tokenData.token;
 
 let geminiApiKey = process.env.GEMINI_API_KEY || '';
@@ -177,15 +178,17 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
 1. Bám sát các cập nhật mới nhất về quy định điều kiện mua NOXH, mức thu nhập tối đa được phép đăng ký, lãi suất gói vay ưu đãi 120k tỷ, thủ tục xét duyệt và tiến độ mở bán dự án:
    - Nếu bài báo về quy định/điều kiện/mức thu nhập mới: Phân tích ngay xem ai đủ điều kiện, hồ sơ cần chuẩn bị những gì để tránh bị loại vô lý.
    - Nếu bài báo về tiến độ/mở bán dự án NOXH mới: Đánh giá vị trí, mức giá bán, thời điểm nhận hồ sơ và tiềm năng an cư.
-   - Nếu bài báo về sai phạm/trục lợi/bốc thăm NOXH: Nhấn mạnh cảnh báo cạm bẫy, rủi ro mua bán suất ngoại giao trái phép.
-2. Không viết lặp lại rập khuôn hay tóm tắt bài báo một cách khô khan. Hãy biến hóa thông tin thành một câu chuyện thực tế, hữu ích, chạm đúng tâm lý người thu nhập thấp và công nhân đang tìm nhà ở.
+2. TUYỆT ĐỐI KHÔNG DÀI DÒNG, LAN MAN, KHÔNG DÙNG CÁC CÂU DẪN DẮT SÁO RỖNG CẤM DÙNG NHƯ: "Hãy tưởng tượng...", "Trong thời gian gần đây...", "Tất cả chúng ta đều biết...", "Hãy cùng tìm hiểu ngay...", "Tương lai đang mở ra...".
+3. Đi thẳng trực tiếp vào vấn đề cốt lõi ngay ở 5 giây đầu tiên!
 
 [YÊU CỰC KỲ QUAN TRỌNG CHO PHẦN "script"]
-1. Dòng 1: CÂU TIÊU ĐỀ HOOK CỰC KỲ GIẬT GÂN GÂY TÒ MÒ (SCROLL STOPPER), VIẾT IN HOA TOÀN BỘ KÈM DẤU CHẤM CẢM (!). TUYỆT ĐỐI KHÔNG COPY NGUYÊN VĂN HOẶC LẶP LẠI TIÊU ĐỀ BÀI BÁO GỐC KHÔ KHAN! Hãy biến hóa thành câu giật tít kích thích tò mò, cảnh báo rủi ro hoặc cơ hội an cư.
-2. Xuống dòng 2 lần, viết phần LỜI THOẠI ĐỌC VOICE-OFF LIỀN MẠCH từ đầu đến cuối.
-3. TUYỆT ĐỐI KHÔNG GHI CÁC TỪ 'TIÊU ĐỀ:', '[HOOK]', '[BODY]', '[CTA]' TRONG NỘI DUNG KỊCH BẢN.
-4. ĐỘ DÀI BẮT BUỘC: Tổng số từ phần "script" (Tiêu đề + Lời thoại) PHẢI NẰM TRONG KHOẢNG 230 ĐẾN 290 TỪ TIẾNG VIỆT. TUYỆT ĐỐI KHÔNG VIẾT NGẮN DƯỚI 230 TỪ. AI cần mở rộng phân tích chuyên sâu các yếu tố điều kiện thu nhập, quy trình xét duyệt, kinh nghiệm nộp hồ sơ thực tế để đảm bảo đủ từ 230-290 từ.
-5. Văn phong tự nhiên, xưng hô gần gũi (mình, em, các bác, mọi người...). TUYỆT ĐỐI KHÔNG xưng tên cá nhân cụ thể. Không kêu gọi inbox riêng.`;
+1. Dòng 1: CÂU TIÊU ĐỀ HOOK CỰC KỲ GIẬT GÂN GÂY TÒ MÒ (SCROLL STOPPER), VIẾT IN HOA TOÀN BỘ KÈM DẤU CHẤM CẢM (!). TUYỆT ĐỐI KHÔNG COPY NGUYÊN VĂN HOẶC LẶP LẠI TIÊU ĐỀ BÀI BÁO GỐC KHÔ KHAN!
+2. 5 GIÂY ĐẦU TIÊN: ĐI THẲNG TRỰC TIẾP VÀO VẤN ĐỀ CỐT LÕI! Đánh ngay vào nguy cơ bị loại hồ sơ, mức thu nhập tối đa, hoặc cơ hội mua nhà hiếm có.
+3. Xuống dòng 2 lần, viết phần LỜI THOẠI ĐỌC VOICE-OFF LIỀN MẠCH từ đầu đến cuối.
+4. TUYỆT ĐỐI KHÔNG GHI CÁC TỪ 'TIÊU ĐỀ:', '[HOOK]', '[BODY]', '[CTA]' TRONG NỘI DUNG KỊCH BẢN.
+5. ĐỘ DÀI BẮT BUỘC: Tổng số từ phần "script" (Tiêu đề + Lời thoại) PHẢI NẰM TRONG KHOẢNG 230 ĐẾN 290 TỪ TIẾNG VIỆT. AI cần mở rộng phân tích chuyên sâu các yếu tố điều kiện thu nhập, quy trình xét duyệt, kinh nghiệm nộp hồ sơ thực tế để đảm bảo đủ từ 230-290 từ mà KHÔNG LAN MAN.
+6. Văn phong tự nhiên, xưng hô gần gũi (mình, em, các bác, mọi người...). TUYỆT ĐỐI KHÔNG xưng tên cá nhân cụ thể. Không kêu gọi inbox riêng.
+`;
 
     const results = [];
     for (let i = 0; i < topArticles.length; i++) {
