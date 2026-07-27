@@ -1,178 +1,194 @@
 const fs = require('fs');
 const path = require('path');
 
-// 1. Calculate Vietnam Time & Window
-const now = new Date();
-const vnOffset = 7 * 60 * 60 * 1000;
-const vnNow = new Date(now.getTime() + vnOffset);
+// Helper to clean JSON strings from Gemini response
+function cleanJsonString(str) {
+    let result = '';
+    let inString = false;
+    let escape = false;
 
-let startTime;
-const endTime = vnNow;
-if (vnNow.getUTCDay() === 1) { // Monday -> 72h window
-    startTime = new Date(vnNow.getTime() - 72 * 60 * 60 * 1000);
-} else { // 24h window
-    startTime = new Date(vnNow.getTime() - 24 * 60 * 60 * 1000);
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        if (char === '"' && !escape) {
+            inString = !inString;
+            result += char;
+        } else if (char === '\\' && !escape) {
+            escape = true;
+            result += char;
+        } else {
+            if (inString) {
+                if (char === '\n') {
+                    result += '\\n';
+                } else if (char === '\r') {
+                    // ignore
+                } else {
+                    result += char;
+                }
+            } else {
+                result += char;
+            }
+            escape = false;
+        }
+    }
+    return result;
 }
 
-function formatDateStr(d) {
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+// Format date helper (Force Vietnam Timezone UTC+7)
+function getFormattedDate(date, format) {
+    const dObj = date || new Date();
+    const options = { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false };
+    const formatter = new Intl.DateTimeFormat('en-GB', options);
+    const parts = formatter.formatToParts(dObj);
+    const map = {};
+    parts.forEach(p => map[p.type] = p.value);
+    
+    const d = map.day;
+    const m = map.month;
+    const y = map.year;
+    let h = map.hour;
+    if (h === '24') h = '00';
+    const min = map.minute;
+
+    if (format === 'sheetname') {
+        return `${h}h${min} - ${d}/${m} - Tin tuc NOXH`;
+    }
+    return `${d}/${m}/${y} ${h}:${min}`;
 }
 
-console.log("=== QUY TRÌNH TIN TỨC NHÀ Ở XÃ HỘI (NOXH) ===");
-console.log(`Lọc bài viết từ: ${formatDateStr(startTime)} đến: ${formatDateStr(endTime)}`);
+async function run() {
+    console.log("=== QUY TRÌNH TIN TỨC NHÀ Ở XÃ HỘI (NOXH) ===");
+    
+    let rootDir = path.resolve(__dirname, '..', '..', '..');
+    if (process.env.GITHUB_WORKSPACE) {
+        rootDir = process.env.GITHUB_WORKSPACE;
+    }
+    
+    let tokenPath = path.join(rootDir, 'meta ads api', 'token.json');
+    if (!fs.existsSync(tokenPath)) {
+        tokenPath = path.join(rootDir, 'meta_ads_api', 'token.json');
+    }
+    if (!fs.existsSync(tokenPath)) {
+        tokenPath = path.join(rootDir, 'token.json');
+    }
 
-// 2. Load Tokens & API Keys
-let rootDir = path.resolve(__dirname, '..', '..', '..');
-if (process.env.GITHUB_WORKSPACE) {
-    rootDir = process.env.GITHUB_WORKSPACE;
-}
+    let envPath = path.join(rootDir, 'meta ads api', '.env');
+    if (!fs.existsSync(envPath)) {
+        envPath = path.join(rootDir, 'meta_ads_api', '.env');
+    }
+    if (!fs.existsSync(envPath)) {
+        envPath = path.join(rootDir, '.env');
+    }
 
-let tokenPath = path.join(rootDir, 'meta ads api', 'token.json');
-if (!fs.existsSync(tokenPath)) {
-    tokenPath = path.join(rootDir, 'meta_ads_api', 'token.json');
-}
-if (!fs.existsSync(tokenPath)) {
-    tokenPath = path.join(rootDir, 'token.json');
-}
+    if (!fs.existsSync(tokenPath)) {
+        throw new Error(`Token file not found at ${tokenPath}`);
+    }
 
-let envPath = path.join(rootDir, 'meta ads api', '.env');
-if (!fs.existsSync(envPath)) {
-    envPath = path.join(rootDir, 'meta_ads_api', '.env');
-}
-if (!fs.existsSync(envPath)) {
-    envPath = path.join(rootDir, '.env');
-}
+    // 1. Load API Key
+    let geminiApiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, '');
+    if (!geminiApiKey && fs.existsSync(envPath)) {
+        const envText = fs.readFileSync(envPath, 'utf8');
+        const lines = envText.split(/\r?\n/);
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith('#')) {
+                const match = trimmed.match(/^GEMINI_API_KEY=(.*)$/);
+                if (match) {
+                    geminiApiKey = match[1].trim().replace(/^["']|["']$/g, '');
+                    break;
+                }
+            }
+        }
+    }
 
-if (!fs.existsSync(tokenPath)) {
-    console.error(`X Lỗi: Chưa tìm thấy file token.json tại ${tokenPath}`);
-    process.exit(1);
-}
+    if (!geminiApiKey) {
+        console.warn("⚠️ KHÔNG TÌM THẤY GEMINI_API_KEY!");
+    } else {
+        console.log(`Đã kết nối GEMINI_API_KEY thành công (Độ dài: ${geminiApiKey.length} ký tự).`);
+    }
 
-let tokenText = fs.readFileSync(tokenPath, 'utf8');
-if (tokenText.charCodeAt(0) === 0xFEFF) {
-    tokenText = tokenText.slice(1);
-}
-const tokenData = JSON.parse(tokenText);
-let accessToken = tokenData.token;
+    // 2. Set up Time Range (24h window or 72h on Monday)
+    const now = new Date();
+    let endTime = now;
+    let startTime;
 
-let geminiApiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, '');
-if (!geminiApiKey && fs.existsSync(envPath)) {
-    const text = fs.readFileSync(envPath, 'utf8');
-    const match = text.match(/^GEMINI_API_KEY=(.*)$/m);
-    if (match) geminiApiKey = match[1].trim().replace(/^["']|["']$/g, '');
-}
-geminiApiKey = geminiApiKey.replace(/[\r\n"'\s]/g, '').trim();
+    if (now.getDay() === 1) { // Monday
+        startTime = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    } else {
+        startTime = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+    }
 
-if (!geminiApiKey) {
-    console.warn("X CẢNH BÁO: GEMINI_API_KEY rỗng! Không thể gọi AI!");
-} else {
-    console.log(`Đã kết nối GEMINI_API_KEY (Độ dài: ${geminiApiKey.length} ký tự).`);
-}
+    console.log(`Lọc bài viết từ: ${getFormattedDate(startTime)} đến: ${getFormattedDate(endTime)}`);
 
-// 3. RSS Feeds for NOXH
-const rssSources = [
-    { url: "https://baomoi.com/rss/bat-dong-san.rss", source: "BaoMoi" },
-    { url: "https://vnexpress.net/rss/bat-dong-san.rss", source: "VnExpress" },
-    { url: "https://vietnamnet.vn/rss/bat-dong-san.rss", source: "VietnamNet" },
-    { url: "https://cafef.vn/bat-dong-san.rss", source: "CafeF" },
-    { url: "https://dantri.com.vn/rss/bat-dong-san.rss", source: "DanTri" },
-    { url: "https://thanhnien.vn/rss/kinh-te/bat-dong-san.rss", source: "ThanhNien" },
-    { url: "https://tuoitre.vn/rss/kinh-doanh.rss", source: "TuoiTre" },
-    { url: "https://laodong.vn/rss/bat-dong-san.rss", source: "LaoDong" },
-    { url: "https://baoxaydung.vn/rss/bat-dong-san.rss", source: "BaoXayDung" }
-];
+    // 3. Fetch RSS Feeds
+    const rssSources = [
+        "https://baomoi.com/rss/bat-dong-san.rss",
+        "https://vnexpress.net/rss/bat-dong-san.rss",
+        "https://vietnamnet.vn/rss/bat-dong-san.rss",
+        "https://cafef.vn/bat-dong-san.rss",
+        "https://dantri.com.vn/rss/bat-dong-san.rss",
+        "https://thanhnien.vn/rss/kinh-te/bat-dong-san.rss",
+        "https://tuoitre.vn/rss/kinh-doanh.rss",
+        "https://laodong.vn/rss/bat-dong-san.rss",
+        "https://baoxaydung.vn/rss/bat-dong-san.rss"
+    ];
 
-const noxhKeywords = ["nhà ở xã hội", "noxh", "nhà thu nhập thấp", "gói 120", "gói 120.000 tỷ", "bốc thăm noxh", "mua nhà ở xã hội", "tiêu chuẩn noxh", "hồ sơ noxh", "định mức noxh"];
+    const noxhKeywords = ["nhà ở xã hội", "noxh", "nhà thu nhập thấp", "gói 120", "gói 120.000 tỷ", "bốc thăm noxh", "mua nhà ở xã hội", "tiêu chuẩn noxh", "hồ sơ noxh", "định mức noxh"];
 
-function isNOXHArticle(text) {
-    if (!text) return false;
-    const lower = text.toLowerCase();
-    return noxhKeywords.some(k => lower.includes(k));
-}
-
-function clean(str) {
-    if (!str) return '';
-    return str.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-              .replace(/<[^>]+>/g, '')
-              .replace(/&amp;/g, '&')
-              .replace(/&lt;/g, '<')
-              .replace(/&gt;/g, '>')
-              .replace(/&quot;/g, '"')
-              .replace(/&#39;/g, "'")
-              .trim();
-}
-
-function parsePubDate(pubDateStr) {
-    if (!pubDateStr) return null;
-    const d = new Date(pubDateStr);
-    if (isNaN(d.getTime())) return null;
-    return new Date(d.getTime() + vnOffset);
-}
-
-function cleanJsonString(jsonStr) {
-    let cleaned = jsonStr.trim();
-    cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '');
-    cleaned = cleaned.replace(/"script"\s*:\s*"([\s\S]*?)"\s*,\s*"fb_content"/gi, (match, scriptVal) => {
-        const escapedScript = scriptVal.replace(/\r?\n/g, '\\n').replace(/\t/g, '\\t');
-        return `"script": "${escapedScript}", "fb_content"`;
-    });
-    return cleaned;
-}
-
-async function main() {
     const articles = [];
-    for (const src of rssSources) {
+    for (const url of rssSources) {
         try {
-            console.log(`Đang tải tin tức từ ${src.source}...`);
-            const res = await fetch(src.url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-            if (!res.ok) continue;
-            const xml = await res.text();
+            console.log(`Đang cào nguồn: ${url}`);
+            const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            if (!response.ok) continue;
+            const xmlText = await response.text();
             
-            const items = xml.split(/<item>/i).slice(1);
-            for (const itemXml of items) {
-                const titleMatch = itemXml.match(/<title>([\s\S]*?)<\/title>/i);
-                const linkMatch = itemXml.match(/<link>([\s\S]*?)<\/link>/i);
-                const descMatch = itemXml.match(/<description>([\s\S]*?)<\/description>/i);
-                const dateMatch = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
+            const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+            let match;
+            while ((match = itemRegex.exec(xmlText)) !== null) {
+                const itemContent = match[1];
+                const title = (itemContent.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '';
+                const link = (itemContent.match(/<link>([\s\S]*?)<\/link>/) || [])[1] || '';
+                const description = (itemContent.match(/<description>([\s\S]*?)<\/description>/) || [])[1] || '';
+                const pubDateStr = (itemContent.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1] || '';
                 
-                const title = titleMatch ? clean(titleMatch[1]) : '';
-                const link = linkMatch ? clean(linkMatch[1]) : '';
-                const desc = descMatch ? clean(descMatch[1]) : '';
-                const pubDate = dateMatch ? parsePubDate(clean(dateMatch[1])) : null;
+                const clean = (str) => str.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, '').trim();
                 
-                if (title && link) {
-                    if (pubDate && (pubDate < startTime || pubDate > endTime)) continue;
-                    if (isNOXHArticle(title) || isNOXHArticle(desc)) {
-                        const trimmedLink = link.split('?')[0].trim();
+                const cleanTitle = clean(title);
+                const cleanDesc = clean(description);
+                const pubDate = new Date(clean(pubDateStr));
+                
+                if (cleanTitle && cleanDesc) {
+                    const text = `${cleanTitle} ${cleanDesc}`.toLowerCase();
+                    if (noxhKeywords.some(k => text.includes(k))) {
+                        const trimmedLink = clean(link).split('?')[0].trim();
                         if (!articles.some(a => a.url === trimmedLink)) {
                             articles.push({
-                                title,
+                                title: cleanTitle,
                                 url: trimmedLink,
-                                description: desc,
-                                source: src.source,
-                                pubDate: pubDate || vnNow
+                                description: cleanDesc,
+                                pubDate: isNaN(pubDate.getTime()) ? now : pubDate
                             });
                         }
                     }
                 }
             }
         } catch (e) {
-            console.warn(`Lỗi khi tải từ ${src.source}:`, e.message);
+            console.warn(`Lỗi khi cào nguồn ${url}:`, e.message);
         }
     }
 
     console.log(`Tìm thấy tổng cộng ${articles.length} bài viết về NOXH.`);
-    
     articles.sort((a, b) => b.pubDate - a.pubDate);
     const topArticles = articles.slice(0, 6);
     console.log(`Quyết định lựa chọn ${topArticles.length} bài viết để gửi AI phân tích.`);
 
     if (topArticles.length === 0) {
-        console.log("Không tìm thấy bài viết nào. Kết thúc.");
+        console.log("Không tìm thấy bài viết nào. Kết thúc quy trình.");
         return;
     }
 
+    // 4. Call AI to Analyze and Write Detailed Scripts
+    const results = [];
     const systemInstruction = `Bạn là một Biên kịch nội dung Video ngắn xuất sắc và là một Chuyên gia tư vấn Nhà ở xã hội (NOXH) hàng đầu tại Việt Nam. Nhiệm vụ của bạn là từ thông tin bài báo được cung cấp, chuyển thể thành kịch bản video ngắn triệu view (TikTok/Reels/Shorts) và bài đăng Facebook thu hút.
 
 Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xác:
@@ -198,7 +214,6 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
 6. Văn phong tự nhiên, xưng hô gần gũi (mình, em, các bác, mọi người...). TUYỆT ĐỐI KHÔNG xưng tên cá nhân cụ thể. Không kêu gọi inbox riêng.
 `;
 
-    const results = [];
     for (let i = 0; i < topArticles.length; i++) {
         const art = topArticles[i];
         console.log(`[${i+1}/${topArticles.length}] Đang phân tích bài: "${art.title}"...`);
@@ -292,12 +307,22 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
         }
     }
 
-    // Connect to Google Drive & Refresh OAuth Token if needed
+    // 5. Connect to Google Drive & Sheets
     console.log("Đang kết nối Google Drive...");
+    let tokenText = fs.readFileSync(tokenPath, 'utf8');
+    if (tokenText.charCodeAt(0) === 0xFEFF) {
+        tokenText = tokenText.slice(1);
+    }
+    const tokenData = JSON.parse(tokenText);
+    let accessToken = tokenData.token;
+
+    // Refresh token if available
     try {
         const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
             body: new URLSearchParams({
                 client_id: tokenData.client_id,
                 client_secret: tokenData.client_secret,
@@ -317,69 +342,86 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
         console.warn("Không thể làm mới token, dùng token hiện tại:", e.message);
     }
 
-    const driveFolderId = "1kYdy7EU24MqFa7ww4VXD2quJsyYuni9E"; // Folder Tin tuc nha o xa hoi
-    const hh = String(vnNow.getUTCHours()).padStart(2, '0');
-    const mm = String(vnNow.getUTCMinutes()).padStart(2, '0');
-    const dd = String(vnNow.getUTCDate()).padStart(2, '0');
-    const MM = String(vnNow.getUTCMonth() + 1).padStart(2, '0');
-    
-    const spreadsheetTitle = `${hh}h${mm} - ${dd}/${MM} - Tin tuc NOXH`;
-    console.log(`Đang tạo Google Spreadsheet: "${spreadsheetTitle}"...`);
-    
-    const createRes = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            properties: { title: spreadsheetTitle }
-        })
-    });
-    
-    if (!createRes.ok) {
-        throw new Error(`Failed to create spreadsheet: ${await createRes.text()}`);
+    const driveHeaders = { "Authorization": `Bearer ${accessToken}` };
+    async function googleApiCall(url, method = "GET", body = null) {
+        const options = { method, headers: { ...driveHeaders } };
+        if (body) {
+            options.body = body;
+            options.headers["Content-Type"] = "application/json";
+        }
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(`Google API ${response.status}: ${await response.text()}`);
+        }
+        return await response.json();
     }
-    const createData = await createRes.json();
-    const spreadsheetId = createData.spreadsheetId;
-    
-    // Move to Drive folder
-    const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${spreadsheetId}?fields=parents`, {
-        headers: { "Authorization": `Bearer ${accessToken}` }
-    });
-    const fileData = await fileRes.json();
-    const previousParents = (fileData.parents || []).join(',');
-    
-    await fetch(`https://www.googleapis.com/drive/v3/files/${spreadsheetId}?addParents=${driveFolderId}&removeParents=${previousParents}&fields=id,parents`, {
-        method: "PATCH",
-        headers: { "Authorization": `Bearer ${accessToken}` }
-    });
 
-    // Write Values
+    // 6. Search for 'OANH' -> 'Antigravity AI lam viec' -> 'Tin tuc nha o xa hoi'
+    const oanhRes = await googleApiCall(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent("mimeType='application/vnd.google-apps.folder' and (name='OANH' or name='Oanh') and trashed=false")}&fields=files(id)`);
+    if (!oanhRes.files || oanhRes.files.length === 0) {
+        throw new Error("Không tìm thấy thư mục OANH trên Drive.");
+    }
+    const oanhId = oanhRes.files[0].id;
+
+    const antiRes = await googleApiCall(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`mimeType='application/vnd.google-apps.folder' and name='Antigravity AI lam viec' and '${oanhId}' in parents and trashed=false`)}&fields=files(id)`);
+    let antiId = antiRes.files && antiRes.files.length > 0 ? antiRes.files[0].id : null;
+    if (!antiId) {
+        const createAnti = await googleApiCall("https://www.googleapis.com/drive/v3/files", "POST", JSON.stringify({
+            name: "Antigravity AI lam viec",
+            mimeType: "application/vnd.google-apps.folder",
+            parents: [oanhId]
+        }));
+        antiId = createAnti.id;
+    }
+
+    const noxhFolderQuery = `mimeType='application/vnd.google-apps.folder' and (name='Tin tuc nha o xa hoi' or name='Tin tức nhà ở xã hội') and '${antiId}' in parents and trashed=false`;
+    const noxhFolderRes = await googleApiCall(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(noxhFolderQuery)}&fields=files(id)`);
+    let noxhFolderId = noxhFolderRes.files && noxhFolderRes.files.length > 0 ? noxhFolderRes.files[0].id : null;
+    if (!noxhFolderId) {
+        const createNoxhFolder = await googleApiCall("https://www.googleapis.com/drive/v3/files", "POST", JSON.stringify({
+            name: "Tin tuc nha o xa hoi",
+            mimeType: "application/vnd.google-apps.folder",
+            parents: [antiId]
+        }));
+        noxhFolderId = createNoxhFolder.id;
+    }
+
+    // 7. Create Google Spreadsheet directly in Google Drive
+    const sheetName = getFormattedDate(now, 'sheetname');
+    console.log(`Đang tạo Google Spreadsheet: "${sheetName}"...`);
+    
+    const createSpreadsheetRes = await googleApiCall("https://www.googleapis.com/drive/v3/files", "POST", JSON.stringify({
+        name: sheetName,
+        mimeType: "application/vnd.google-apps.spreadsheet",
+        parents: [noxhFolderId]
+    }));
+    
+    const spreadsheetId = createSpreadsheetRes.id;
+    
+    const sheetMetadata = await googleApiCall(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`);
+    const defaultSheetTitle = sheetMetadata.sheets[0].properties.title;
+
     const headersRow = ['STT', 'Tiêu đề bài báo', 'Đường dẫn [URL]', 'Phong cách / Góc nhìn', 'Kịch bản Voice-off (Lời thoại)', 'Nội dung đăng Facebook (Content FB)'];
     const values = [headersRow];
     results.forEach(item => {
         values.push([item.stt, item.title, item.url, item.angle, item.script, item.fb_content]);
     });
 
-    const defaultSheetTitle = createData.sheets[0].properties.title;
+    console.log("Đang ghi dữ liệu vào Google Sheet...");
     const rangeStr = `'${defaultSheetTitle}'!A1:F${values.length}`;
+    const updateUri = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rangeStr)}?valueInputOption=USER_ENTERED`;
     
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rangeStr)}?valueInputOption=USER_ENTERED`, {
-        method: "PUT",
-        headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            range: rangeStr,
-            majorDimension: "ROWS",
-            values: values
-        })
-    });
+    await googleApiCall(updateUri, "PUT", JSON.stringify({
+        range: rangeStr,
+        majorDimension: "ROWS",
+        values: values
+    }));
 
     console.log("Đã tải tệp lên Drive thành công!");
     console.log(`Drive link: https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`);
 }
 
-main().catch(console.error);
+run().catch(e => {
+    console.error("LỖI HỆ THỐNG:", e.message);
+    process.exit(1);
+});
