@@ -23,35 +23,44 @@ console.log("=== QUY TRÌNH TIN TỨC BẤT ĐỘNG SẢN TOÀN QUỐC ===");
 console.log(`Lọc bài viết từ: ${formatDateStr(startTime)} đến: ${formatDateStr(endTime)}`);
 
 // 2. Load Tokens & API Keys
-function findMetaAdsDir() {
-    const root = path.resolve(__dirname, '../../..');
-    const p1 = path.join(root, 'meta ads api');
-    if (fs.existsSync(p1)) return p1;
-    const p2 = path.join(root, 'meta_ads_api');
-    if (fs.existsSync(p2)) return p2;
-    return path.join(__dirname, 'meta ads api');
+let rootDir = path.resolve(__dirname, '..', '..', '..');
+if (process.env.GITHUB_WORKSPACE) {
+    rootDir = process.env.GITHUB_WORKSPACE;
 }
 
-const metaAdsDir = findMetaAdsDir();
-const tokenPath = path.join(metaAdsDir, 'token.json');
+let tokenPath = path.join(rootDir, 'meta ads api', 'token.json');
+if (!fs.existsSync(tokenPath)) {
+    tokenPath = path.join(rootDir, 'meta_ads_api', 'token.json');
+}
+if (!fs.existsSync(tokenPath)) {
+    tokenPath = path.join(rootDir, 'token.json');
+}
+
+let envPath = path.join(rootDir, 'meta ads api', '.env');
+if (!fs.existsSync(envPath)) {
+    envPath = path.join(rootDir, 'meta_ads_api', '.env');
+}
+if (!fs.existsSync(envPath)) {
+    envPath = path.join(rootDir, '.env');
+}
 
 if (!fs.existsSync(tokenPath)) {
     console.error(`X Lỗi: Chưa tìm thấy file token.json tại ${tokenPath}`);
     process.exit(1);
 }
 
-const tokenRaw = fs.readFileSync(tokenPath, 'utf8').replace(/^\uFEFF/, '');
-const tokenData = JSON.parse(tokenRaw);
+let tokenText = fs.readFileSync(tokenPath, 'utf8');
+if (tokenText.charCodeAt(0) === 0xFEFF) {
+    tokenText = tokenText.slice(1);
+}
+const tokenData = JSON.parse(tokenText);
 let accessToken = tokenData.token;
 
-let geminiApiKey = process.env.GEMINI_API_KEY || '';
-if (!geminiApiKey) {
-    const envPath = path.join(metaAdsDir, '.env');
-    if (fs.existsSync(envPath)) {
-        const text = fs.readFileSync(envPath, 'utf8');
-        const match = text.match(/^GEMINI_API_KEY=(.*)$/m);
-        if (match) geminiApiKey = match[1].trim().replace(/^["']|["']$/g, '');
-    }
+let geminiApiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, '');
+if (!geminiApiKey && fs.existsSync(envPath)) {
+    const text = fs.readFileSync(envPath, 'utf8');
+    const match = text.match(/^GEMINI_API_KEY=(.*)$/m);
+    if (match) geminiApiKey = match[1].trim().replace(/^["']|["']$/g, '');
 }
 geminiApiKey = geminiApiKey.replace(/[\r\n"'\s]/g, '').trim();
 
@@ -155,7 +164,6 @@ async function main() {
 
     console.log(`Tìm thấy tổng cộng ${articles.length} bài viết về BĐS Toàn Quốc.`);
     
-    // Select top 6 distinct articles
     articles.sort((a, b) => b.pubDate - a.pubDate);
     const topArticles = articles.slice(0, 6);
     console.log(`Quyết định lựa chọn ${topArticles.length} bài viết để gửi AI phân tích.`);
@@ -284,8 +292,31 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
         }
     }
 
-    // Google Sheets Upload
+    // Connect to Google Drive & Refresh OAuth Token if needed
     console.log("Đang kết nối Google Drive...");
+    try {
+        const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                client_id: tokenData.client_id,
+                client_secret: tokenData.client_secret,
+                refresh_token: tokenData.refresh_token,
+                grant_type: "refresh_token"
+            })
+        });
+
+        if (refreshResponse.ok) {
+            const refreshResData = await refreshResponse.json();
+            accessToken = refreshResData.access_token;
+            tokenData.token = accessToken;
+            fs.writeFileSync(tokenPath, JSON.stringify(tokenData, null, 4), 'utf8');
+            console.log("Đã làm mới mã truy cập Google.");
+        }
+    } catch (e) {
+        console.warn("Không thể làm mới token, dùng token hiện tại:", e.message);
+    }
+
     const driveFolderId = "11kJuv8LoSF03BEzRdu_klXWTrJ9IglUL"; // Folder Tin tuc bat dong san toan quoc
     const hh = String(vnNow.getUTCHours()).padStart(2, '0');
     const mm = String(vnNow.getUTCMinutes()).padStart(2, '0');
