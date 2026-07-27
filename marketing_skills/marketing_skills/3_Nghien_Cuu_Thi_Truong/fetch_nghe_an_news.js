@@ -199,6 +199,8 @@ async function run() {
         }
     }
 
+    geminiApiKey = geminiApiKey.replace(/[^\x20-\x7E]/g, '').trim();
+
     if (!geminiApiKey) {
         console.warn("⚠️ KHÔNG TÌM THẤY GEMINI_API_KEY! AI sẽ rơi vào hàm mẫu dự phòng!");
     } else {
@@ -315,6 +317,7 @@ Hãy trả về một đối tượng JSON hợp lệ có cấu trúc chính xá
 6. Văn phong tự nhiên, xưng hô gần gũi (mình, em, các bác, mọi người...). TUYỆT ĐỐI KHÔNG xưng tên cá nhân cụ thể. Không kêu gọi inbox riêng.
 `;
 
+    const results = [];
     for (let i = 0; i < topArticles.length; i++) {
         const art = topArticles[i];
         console.log(`[${i+1}/${topArticles.length}] Đang phân tích bài: "${art.title}"...`);

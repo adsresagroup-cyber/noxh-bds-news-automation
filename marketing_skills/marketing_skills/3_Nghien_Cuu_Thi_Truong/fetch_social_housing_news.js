@@ -94,6 +94,7 @@ async function run() {
                 const match = trimmed.match(/^GEMINI_API_KEY=(.*)$/);
                 if (match) {
                     geminiApiKey = match[1].trim().replace(/^["']|["']$/g, '');
+                    geminiApiKey = geminiApiKey.replace(/[^\x20-\x7E]/g, '').trim();
                     break;
                 }
             }
