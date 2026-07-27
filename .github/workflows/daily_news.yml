@@ -34,11 +34,11 @@ jobs:
 
       - name: Run National Real Estate News Crawler
         run: |
-          pwsh -File ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_national_real_estate_news.ps1
+          node ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_national_real_estate_news.js
 
       - name: Run Social Housing (NOXH) News Crawler
         run: |
-          pwsh -File ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_social_housing_news.ps1
+          node ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_social_housing_news.js
 
       - name: Run Nghe An Real Estate News Crawler
         run: |
