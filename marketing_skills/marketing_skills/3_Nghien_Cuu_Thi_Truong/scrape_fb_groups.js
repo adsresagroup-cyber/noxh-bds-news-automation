@@ -6,9 +6,7 @@ const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
 const DEFAULT_GROUPS = [
     { url: 'https://www.facebook.com/groups/656952939567390', id: '656952939567390' },
     { url: 'https://www.facebook.com/groups/1690642521915386', id: '1690642521915386' },
-    { url: 'https://www.facebook.com/groups/646402147493446', id: '646402147493446' },
-    { url: 'https://www.facebook.com/groups/reviewbatdongsanaz', id: 'reviewbatdongsanaz' },
-    { url: 'https://www.facebook.com/groups/congdongmuabanbds', id: 'congdongmuabanbds' }
+    { url: 'https://www.facebook.com/groups/646402147493446', id: '646402147493446' }
 ];
 
 // Helper to shuffle and pick N random elements
