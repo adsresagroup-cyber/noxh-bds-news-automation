@@ -1,0 +1,43 @@
+name: Weekly Facebook Groups Crawler
+
+on:
+  schedule:
+    # 8h00 sáng thứ 3 Việt Nam hàng tuần (01:00 UTC Tuesday)
+    - cron: '0 1 * * 2'
+  workflow_dispatch: # Cho phép bấm nút kích hoạt thủ công trên web GitHub khi cần
+
+jobs:
+  run-fb-group-crawler:
+    runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Google Chrome and Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable || true
+          npm install puppeteer-core
+
+      - name: Restore Credentials from Secrets
+        run: |
+          mkdir -p "meta ads api"
+          mkdir -p "meta_ads_api"
+          printf '%s' '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta ads api/token.json"
+          printf '%s' '${{ secrets.GOOGLE_TOKEN_JSON }}' > "meta_ads_api/token.json"
+          printf '%s' '${{ secrets.GOOGLE_TOKEN_JSON }}' > "token.json"
+          printf 'GEMINI_API_KEY=%s' '${{ secrets.GEMINI_API_KEY }}' > "meta ads api/.env"
+          printf 'GEMINI_API_KEY=%s' '${{ secrets.GEMINI_API_KEY }}' > "meta_ads_api/.env"
+          printf 'GEMINI_API_KEY=%s' '${{ secrets.GEMINI_API_KEY }}' > ".env"
+
+      - name: Run Facebook Groups Crawler
+        run: |
+          node ./marketing_skills/marketing_skills/3_Nghien_Cuu_Thi_Truong/fetch_group_fb_posts.js

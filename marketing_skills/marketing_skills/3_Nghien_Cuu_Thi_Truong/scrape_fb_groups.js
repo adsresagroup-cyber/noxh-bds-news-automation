@@ -2,7 +2,26 @@ const puppeteer = require('puppeteer-core');
 const fs = require('fs');
 const path = require('path');
 
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+function getChromePath() {
+    if (process.env.CHROME_PATH && fs.existsSync(process.env.CHROME_PATH)) {
+        return process.env.CHROME_PATH;
+    }
+    const winPath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+    if (fs.existsSync(winPath)) return winPath;
+    
+    const linuxPaths = [
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/google-chrome',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/chromium'
+    ];
+    for (const p of linuxPaths) {
+        if (fs.existsSync(p)) return p;
+    }
+    return winPath;
+}
+
+const CHROME_PATH = getChromePath();
 const DEFAULT_GROUPS = [
     { url: 'https://www.facebook.com/groups/656952939567390', id: '656952939567390' },
     { url: 'https://www.facebook.com/groups/1690642521915386', id: '1690642521915386' },
